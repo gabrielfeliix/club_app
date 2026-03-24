@@ -206,7 +206,7 @@ class ReportsView extends StatelessWidget {
 
                     // --- DECISIONS SECTION ---
                     const SizedBox(height: 48),
-                    Text('Decisões (Últimos 6 Meses)',
+                    Text('Decisões (Últimos 3 Meses)',
                         style: context.text.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: context.colors.onSurface)),

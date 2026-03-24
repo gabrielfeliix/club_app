@@ -10,8 +10,12 @@ import 'package:club_app/pages/users_manage/view/users_manage_page.dart';
 import 'package:club_app/pages/account_page/view/account_page.dart';
 import 'package:club_app/pages/account_page/bloc/account_bloc.dart';
 import 'package:club_app/routes/routes.dart';
+import 'package:club_app/pages/general_reports_page/bloc/general_reports_bloc.dart';
+import 'package:club_app/pages/general_reports_page/view/general_reports_view.dart';
 import 'package:club_app/utils/constants.dart';
 import 'package:club_repository/club_repository.dart';
+import 'package:attendance_repository/attendance_repository.dart';
+import 'package:decision_repository/decision_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:app_ui/app_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -49,6 +53,13 @@ class HomePage extends StatelessWidget {
             )..add(GetAccountDataRequired(userId: authUser?.userId ?? ''));
           },
         ),
+        BlocProvider(
+          create: (_) => GeneralReportsBloc(
+            clubRepository: getIt<IClubRepository>(),
+            attendanceRepository: getIt<IAttendanceRepository>(),
+            decisionRepository: getIt<IDecisionRepository>(),
+          )..add(LoadGeneralReportsRequired()),
+        ),
       ],
       child: const HomeScreenView(),
     );
@@ -75,7 +86,7 @@ class HomeScreenView extends StatelessWidget {
           appBar: _buildAppBar(context, isAdmin),
           body: TabBarView(
             children: [
-              Container(color: Colors.blue),
+              const GeneralReportsView(),
               ClubsPageView(),
               if (isAdmin) const UsersManageView(),
               const AccountView(),
@@ -139,7 +150,7 @@ class HomeScreenView extends StatelessWidget {
         tabAlignment: TabAlignment.center,
         tabs: [
           const Tab(
-            text: 'Estatisticas Gerais',
+            text: 'Estatísticas',
           ),
           const Tab(
             text: 'Clubinhos',

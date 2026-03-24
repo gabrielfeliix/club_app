@@ -47,4 +47,23 @@ class SupabaseDecisionRepository implements IDecisionRepository {
       return Error(Exception('Failed to create decision: $e'));
     }
   }
+
+  @override
+  Future<Result<List<DecisionModel>, Exception>> getAllDecisionsGlobal() async {
+    try {
+      final response = await supabaseClient
+          .from('decisions')
+          .select()
+          .order('decision_date', ascending: false);
+
+      final List<DecisionModel> decisions = response
+          .map<DecisionModel>((json) => DecisionModel.fromJson(json))
+          .toList();
+
+      return Success(decisions);
+    } catch (e, stackTrace) {
+      log('Error fetching all decisions from Supabase: $e', stackTrace: stackTrace);
+      return Error(Exception('Failed to fetch all decisions: $e'));
+    }
+  }
 }

@@ -103,4 +103,43 @@ class SupabaseAttendanceRepository implements IAttendanceRepository {
     // Deprecated for the new Supabase bulk method but kept to satisfy interface
     return const Error(Failure(message: 'Utilize saveAttendanceSession para Supabase.'));
   }
+
+  @override
+  Future<Result<List<AttendanceModel>, Failure>> getAllAttendancesGlobal() async {
+    try {
+      final response = await _supabase
+          .from('attendances')
+          .select('*, attendance_records(*)')
+          .order('date', ascending: false);
+
+      final list = response.map((e) {
+        final recordsData = e['attendance_records'] as List<dynamic>? ?? [];
+        final items = recordsData.map((r) => AttendanceItem(
+              kidId: r['kid_id'] as String,
+              present: r['present'] as bool,
+            )).toList();
+
+        return AttendanceModel(
+          attendanceList: items,
+          clubId: e['club_id'] as String,
+          date: e['date'] as String,
+        );
+      }).toList();
+
+      return Success(list);
+    } catch (e) {
+      return Error(Failure(message: 'Erro ao buscar chamadas globais: $e'));
+    }
+  }
+
+  @override
+  Future<Result<List<KidsModel>, Failure>> getAllChildrenGlobal() async {
+    try {
+      final response = await _supabase.from('kids').select();
+      final kids = response.map((e) => KidsModel.fromJsonBasic(e).copyWith(clubId: e['club_id'] as String)).toList();
+      return Success(kids);
+    } catch (e) {
+      return Error(Failure(message: 'Erro ao buscar todas as crianças: $e'));
+    }
+  }
 }

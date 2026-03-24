@@ -32,11 +32,6 @@ class ReportsBloc extends Bloc<IReportsEvent, ReportsBlocState> {
     final attendances = attendancesResult.when((s) => s, (e) => <AttendanceModel>[]);
     final decisions = decisionsResult.when((s) => s, (e) => <DecisionModel>[]);
 
-    if (kids.isEmpty && attendances.isEmpty && decisions.isEmpty) {
-      emit(const ReportsBlocState.failure(message: 'Erro ao carregar dados do relatório.'));
-      return;
-    }
-
     final int totalSessions = attendances.length;
 
     // Build chart data up to the last 7 sessions, reversed for chronological order (left to right)
@@ -68,7 +63,7 @@ class ReportsBloc extends Bloc<IReportsEvent, ReportsBlocState> {
     // Decisions Chart Data: Group by month for the last 6 months
     final now = DateTime.now();
     final Map<String, int> monthlyDecisions = {};
-    for (int i = 5; i >= 0; i--) {
+    for (int i = 2; i >= 0; i--) {
       final monthDate = DateTime(now.year, now.month - i, 1);
       final key = DateFormat('yyyy-MM').format(monthDate);
       monthlyDecisions[key] = 0;

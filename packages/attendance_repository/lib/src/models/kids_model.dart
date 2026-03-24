@@ -7,6 +7,7 @@ class KidsModel extends Equatable {
   final String fullName;
   final bool isPresent;
   final bool isAbsent;
+  final DateTime? createdAt;
 
   const KidsModel(
       {required this.id,
@@ -14,7 +15,8 @@ class KidsModel extends Equatable {
       required this.fullName,
       required this.isAbsent,
       required this.isPresent,
-      required this.clubId});
+      required this.clubId,
+      this.createdAt});
 
   /// Empty user which represents an unauthenticated user
   static const empty = KidsModel(
@@ -34,6 +36,7 @@ class KidsModel extends Equatable {
     String? clubId,
     bool? isAbsent,
     bool? isPresent,
+    DateTime? createdAt,
   }) {
     return KidsModel(
       clubId: clubId ?? this.clubId,
@@ -42,17 +45,19 @@ class KidsModel extends Equatable {
       fullName: fullName ?? this.fullName,
       isAbsent: isAbsent ?? this.isAbsent,
       isPresent: isPresent ?? this.isPresent,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
   factory KidsModel.fromJsonBasic(Map<String, dynamic> json) {
     return KidsModel(
-      clubId: '',
+      clubId: json['club_id'] ?? '',
       id: json['id'] ?? '',
       fullName: json['full_name'] ?? json['name'] ?? json['fullName'] ?? '',
       age: json['age'] ?? '',
       isAbsent: false,
       isPresent: false,
+      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
     );
   }
 
@@ -70,5 +75,6 @@ class KidsModel extends Equatable {
         isAbsent,
         isPresent,
         clubId,
+        createdAt,
       ];
 }

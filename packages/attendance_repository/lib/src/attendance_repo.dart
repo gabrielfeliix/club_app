@@ -22,4 +22,7 @@ abstract class IAttendanceRepository {
     required List<KidsModel> kidsList,
     String? date,
   });
+
+  Future<Result<List<AttendanceModel>, Failure>> getAllAttendancesGlobal();
+  Future<Result<List<KidsModel>, Failure>> getAllChildrenGlobal();
 }
