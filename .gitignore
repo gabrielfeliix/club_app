@@ -11,11 +11,12 @@
 migrate_working_dir/
 .env
 firebase_options.dart
-#android/gradle/wrapper/gradle-wrapper.properties
-#android/settings.gradle
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+firebase.json
+
 # Ignore Android NDK build outputs
 android/app/.cxx/
-firebase.json
 
 
 
