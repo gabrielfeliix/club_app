@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:app_ui/src/theme/text_theme.dart';
 import 'package:flutter/material.dart';
 
@@ -24,7 +26,7 @@ class GlobalThemeData {
       textTheme: textTheme,
       colorScheme: colorScheme,
       canvasColor: colorScheme.background,
-      // scaffoldBackgroundColor: colorScheme.background,
+      scaffoldBackgroundColor: colorScheme.secondary,
       // highlightColor: Colors.transparent,
     );
   }
@@ -32,7 +34,7 @@ class GlobalThemeData {
   static const ColorScheme lightColorScheme = ColorScheme.light(
     primary: Color(0xFF4D975B),
     onPrimary: Color(0xFFFFFFFF),
-    secondary: Color(0xFFFFFFFF),
+    secondary: Color.fromARGB(255, 217, 217, 217),
     onSecondary: Color(0xFF000000),
     tertiary: Color(0xFF0000FF),
     error: Colors.redAccent,

@@ -13,6 +13,7 @@ class ManageMemberBloc extends Bloc<IManageMemberEvent, ManageMemberState> {
         super(const ManageMemberState.initial()) {
     on<GetTeatchersRequired>(_onGetTeatchersDataRequired);
     on<GetChildrenRequired>(_onGetChildrenDataRequired);
+    on<AddTeacherToClubRequired>(_onAddTeacherToClubRequired);
   }
 
   Future<void> _onGetTeatchersDataRequired(
@@ -41,6 +42,24 @@ class ManageMemberBloc extends Bloc<IManageMemberEvent, ManageMemberState> {
       (success) => emit(
         ManageMemberState.successChildren(childrenModel: success),
       ),
+      (failure) => emit(
+        ManageMemberState.failure(message: failure.message),
+      ),
+    );
+  }
+
+  Future<void> _onAddTeacherToClubRequired(
+      AddTeacherToClubRequired event, Emitter<ManageMemberState> emit) async {
+    emit(const ManageMemberState.loading());
+
+    final response = await _clubRepository.joinClub(
+        clubId: event.clubId, userId: event.teacherId);
+
+    response.when(
+      (success) {
+        // Re-fetch teachers after successfully adding one
+        add(GetTeatchersRequired(id: event.clubId));
+      },
       (failure) => emit(
         ManageMemberState.failure(message: failure.message),
       ),

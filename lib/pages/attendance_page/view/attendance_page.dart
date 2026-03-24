@@ -51,10 +51,10 @@ class AttendanceViews extends StatelessWidget {
         state.message!,
         type: SnackBarType.error,
       );
-    } else if (state.isSuccess) {
+    } else if (state.isSuccess && state.message != null && state.message!.isNotEmpty) {
       showCustomSnackBar(
         context,
-        'Carregado!',
+        state.message!,
         type: SnackBarType.success,
       );
     }
@@ -72,6 +72,18 @@ class AttendanceViews extends StatelessWidget {
               leading: const Icon(Icons.calendar_month),
               title: Text(state.attendanceList![index].date),
               trailing: const Icon(Icons.edit),
+              onTap: () async {
+                final result = await context.push<bool>(
+                  AppRouter.takeAttendance,
+                  extra: {
+                    'clubId': id,
+                    'attendanceModel': state.attendanceList![index],
+                  },
+                );
+                if (result == true && context.mounted) {
+                  _refreshAtt(context, id);
+                }
+              },
             );
           },
         ),
@@ -91,7 +103,10 @@ class AttendanceViews extends StatelessWidget {
   }
 
   /// Navigates to the take attendance children when is triggered.
-  onTapTakeAttendance(BuildContext context) {
-    context.push(AppRouter.takeAttendance, extra: id);
+  onTapTakeAttendance(BuildContext context) async {
+    final result = await context.push<bool>(AppRouter.takeAttendance, extra: id);
+    if (result == true && context.mounted) {
+      _refreshAtt(context, id);
+    }
   }
 }

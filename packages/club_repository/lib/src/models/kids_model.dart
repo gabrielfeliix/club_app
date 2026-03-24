@@ -70,15 +70,15 @@ class KidsModel extends Equatable {
     // final data = json.data()!;
     return KidsModel(
       id: json['id'] ?? '',
-      fullName: json['fullName'] ?? '',
+      fullName: json['full_name'] ?? json['fullName'] ?? '',
       age: json['age'] ?? '',
-      birthDate: json['birthDate'] ?? '',
-      address: json['address'],
-      contactNumber: json['contactNumber'],
-      fatherName: json['fatherName'],
-      motherName: json['motherName'],
-      notes: json['notes'],
-      clubIdSave: '',
+      birthDate: json['birth_date'] ?? json['birthDate'] ?? '',
+      address: json['address'] ?? '',
+      contactNumber: json['contact_number'] ?? json['contactNumber'] ?? '',
+      fatherName: json['father_name'] ?? json['fatherName'] ?? '',
+      motherName: json['mother_name'] ?? json['motherName'] ?? '',
+      notes: json['notes'] ?? '',
+      clubIdSave: json['club_id'] ?? '',
     );
   }
 

@@ -5,6 +5,7 @@ class UsersModel extends Equatable {
   final String id;
   final String name;
   final String email;
+  final String contact;
   final List<String> classIds;
   final UserRole userRole;
 
@@ -13,12 +14,13 @@ class UsersModel extends Equatable {
     required this.classIds,
     required this.name,
     required this.email,
+    required this.contact,
     required this.userRole,
   });
 
   // Empty user witch represents an unauthenticaded user
   static const empty = UsersModel(
-      name: '', email: '', classIds: [], id: '', userRole: UserRole.teacher);
+      name: '', email: '', contact: '', classIds: [], id: '', userRole: UserRole.teacher);
 
   //modify UsersModel parameters
   UsersModel copyWith({
@@ -34,6 +36,7 @@ class UsersModel extends Equatable {
         classIds: classIds ?? this.classIds,
         name: name ?? this.name,
         email: email ?? this.email,
+        contact: contact ?? this.contact,
         userRole: userRole ?? this.userRole);
   }
 
@@ -42,6 +45,7 @@ class UsersModel extends Equatable {
       id: "",
       name: json['name'] ?? '',
       email: json['email'] ?? '',
+      contact: json['contact'] ?? '',
       classIds: (json['classIds'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
@@ -70,5 +74,5 @@ class UsersModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [name, email, classIds, id, userRole];
+  List<Object?> get props => [name, email, contact, classIds, id, userRole];
 }

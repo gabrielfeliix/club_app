@@ -219,8 +219,8 @@ class SignInPageView extends StatelessWidget {
   }) {
     return RichText(
       text: TextSpan(
-        style:
-            context.text.bodySmall!.copyWith(color: context.colors.onSecondary),
+        style: context.text.bodySmall!
+            .copyWith(color: context.colors.onSecondary.withOpacity(0.5)),
         children: <TextSpan>[
           TextSpan(
             text: ' $text',

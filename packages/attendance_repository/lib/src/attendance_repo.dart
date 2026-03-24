@@ -16,4 +16,10 @@ abstract class IAttendanceRepository {
     required String kidId,
     required bool present,
   });
+
+  Future<Result<String, Failure>> saveAttendanceSession({
+    required String clubId,
+    required List<KidsModel> kidsList,
+    String? date,
+  });
 }

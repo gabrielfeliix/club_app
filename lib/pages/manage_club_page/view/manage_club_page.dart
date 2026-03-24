@@ -191,7 +191,11 @@ class ManageClubView extends StatelessWidget {
                     () => onTapManagechildren(context, state.clubModel!.id),
                   ),
                   _buildRoundedSquare(
-                      context, "Relatórios", state.clubModel!.id, () {}),
+                    context,
+                    "Relatórios",
+                    state.clubModel!.id,
+                    () => context.push(AppRouter.reports, extra: state.clubModel!.id),
+                  ),
                   _buildRoundedSquare(
                     context,
                     "Chamada",
@@ -202,9 +206,23 @@ class ManageClubView extends StatelessWidget {
                     ),
                   ),
                   _buildRoundedSquare(
-                      context, "Decisões", state.clubModel!.id, () {}),
+                    context,
+                    "Decisões",
+                    state.clubModel!.id,
+                    () => context.push(AppRouter.decisions, extra: state.clubModel!.id),
+                  ),
                   _buildRoundedSquare(
-                      context, "Escala", state.clubModel!.id, () {}),
+                    context,
+                    "Escala",
+                    state.clubModel!.id,
+                    () => context.push(AppRouter.schedules, extra: state.clubModel!.id),
+                  ),
+                  _buildRoundedSquare(
+                    context,
+                    "Material \nde Apoio",
+                    state.clubModel!.id,
+                    () => null,
+                  ),
                 ],
               ),
             ),

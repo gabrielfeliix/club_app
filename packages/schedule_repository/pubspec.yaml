@@ -1,0 +1,20 @@
+name: schedule_repository
+description: A new Flutter package for managing schedules and blocks.
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  supabase_flutter: ^2.0.0
+  equatable: ^2.0.0
+  json_annotation: ^4.8.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  build_runner: ^2.4.0
+  json_serializable: ^6.7.0

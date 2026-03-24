@@ -7,6 +7,8 @@ import 'package:club_app/pages/clubs_page/view/clubs_page.dart';
 import 'package:club_app/pages/sign_in_page/bloc/authentication_bloc.dart';
 import 'package:club_app/pages/users_manage/bloc/users_manage_bloc.dart';
 import 'package:club_app/pages/users_manage/view/users_manage_page.dart';
+import 'package:club_app/pages/account_page/view/account_page.dart';
+import 'package:club_app/pages/account_page/bloc/account_bloc.dart';
 import 'package:club_app/routes/routes.dart';
 import 'package:club_app/utils/constants.dart';
 import 'package:club_repository/club_repository.dart';
@@ -38,6 +40,15 @@ class HomePage extends StatelessWidget {
             authenticationRepository: getIt<IAuthenticationRepository>(),
           )..add(GetAllUsersRequired()),
         ),
+        BlocProvider(
+          create: (_) {
+            final authUser = CacheClient.read<AuthUserModel>(key: AppConstants.userCacheKey);
+            return AccountBloc(
+              authRepository: getIt<IAuthenticationRepository>(),
+              clubRepository: getIt<IClubRepository>(),
+            )..add(GetAccountDataRequired(userId: authUser?.userId ?? ''));
+          },
+        ),
       ],
       child: const HomeScreenView(),
     );
@@ -67,7 +78,7 @@ class HomeScreenView extends StatelessWidget {
               Container(color: Colors.blue),
               ClubsPageView(),
               if (isAdmin) const UsersManageView(),
-              Container(color: Colors.red),
+              const AccountView(),
             ],
           ),
         ),

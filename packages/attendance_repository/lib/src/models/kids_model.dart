@@ -49,7 +49,7 @@ class KidsModel extends Equatable {
     return KidsModel(
       clubId: '',
       id: json['id'] ?? '',
-      fullName: json['fullName'] ?? '',
+      fullName: json['full_name'] ?? json['name'] ?? json['fullName'] ?? '',
       age: json['age'] ?? '',
       isAbsent: false,
       isPresent: false,

@@ -1,7 +1,8 @@
 import 'package:authentication_repository/authentication_repository.dart';
 import 'package:attendance_repository/attendance_repository.dart';
-
 import 'package:club_repository/club_repository.dart';
+import 'package:decision_repository/decision_repository.dart';
+import 'package:schedule_repository/schedule_repository.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
@@ -9,6 +10,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
+
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:club_app/app/app.dart';
 import 'package:club_app/app/simple_bloc_observer.dart';
@@ -21,10 +25,18 @@ import 'package:club_app/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
+  
   Bloc.observer = SimpleBlocObserver();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL'] ?? '',
+    anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+  );
+
   await setupDependences();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(
@@ -42,14 +54,22 @@ final getIt = GetIt.instance;
 Future<void> setupDependences() async {
   // Register service authentication
   getIt.registerLazySingleton<IAuthenticationRepository>(
-    () => FirebaseAuthRepository(),
+    () => SupabaseAuthRepository(),
   );
   // Register service clubs
   getIt.registerLazySingleton<IClubRepository>(
-    () => FirebaseClubRepository(),
+    () => SupabaseClubRepository(),
   );
   // Register service attendances
   getIt.registerLazySingleton<IAttendanceRepository>(
-    () => FirebaseAttendanceRepository(),
+    () => SupabaseAttendanceRepository(),
+  );
+  // Register service decisions
+  getIt.registerLazySingleton<IDecisionRepository>(
+    () => SupabaseDecisionRepository(),
+  );
+  // Register service schedules
+  getIt.registerLazySingleton<IScheduleRepository>(
+    () => SupabaseScheduleRepository(supabase: Supabase.instance.client),
   );
 }

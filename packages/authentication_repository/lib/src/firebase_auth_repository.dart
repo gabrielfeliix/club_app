@@ -165,4 +165,64 @@ class FirebaseAuthRepository implements IAuthenticationRepository {
       return Error(Failure(message: "Erro inesperado: $e"));
     }
   }
+
+  @override
+  Future<Result<UsersModel, Failure>> getUserData({required String userId}) async {
+    try {
+      final doc = await _firebaseFirestore.collection('teachers').doc(userId).get();
+      if (!doc.exists) return Error(Failure(message: 'Usuário não encontrado.'));
+      return Success(UsersModel.fromJson(doc.data() as Map<String, dynamic>).copyWith(id: userId));
+    } catch (e) {
+      return Error(Failure(message: 'Erro ao buscar dados do usuário: $e'));
+    }
+  }
+
+  @override
+  Future<Result<String, Failure>> updateProfile({
+    required String userId,
+    required String name,
+    required String phone,
+  }) async {
+    try {
+      await _firebaseFirestore.collection('teachers').doc(userId).update({
+        'name': name.trim(),
+        'contact': phone.trim(),
+      });
+      return const Success("Perfil atualizado com sucesso");
+    } on FirebaseException catch (e) {
+      return Error(Failure(message: "Erro ao atualizar perfil: ${e.message}"));
+    } catch (e) {
+      return Error(Failure(message: "Erro inesperado: $e"));
+    }
+  }
+
+  @override
+  Future<Result<String, Failure>> updateEmail({required String newEmail}) async {
+    try {
+      if (_firebaseAuth.currentUser != null) {
+        await _firebaseAuth.currentUser!.verifyBeforeUpdateEmail(newEmail.trim());
+        return const Success("Solicitação enviada. Verifique seu novo e-mail.");
+      }
+      return const Error(Failure(message: "Usuário não logado."));
+    } on FirebaseAuthException catch (e) {
+      return Error(Failure(message: "Erro de autenticação: ${e.message}"));
+    } catch (e) {
+      return Error(Failure(message: "Erro inesperado: $e"));
+    }
+  }
+
+  @override
+  Future<Result<String, Failure>> updatePassword({required String newPassword}) async {
+    try {
+      if (_firebaseAuth.currentUser != null) {
+        await _firebaseAuth.currentUser!.updatePassword(newPassword.trim());
+        return const Success("Senha atualizada com sucesso");
+      }
+      return const Error(Failure(message: "Usuário não logado."));
+    } on FirebaseAuthException catch (e) {
+      return Error(Failure(message: "Erro de autenticação: ${e.message}"));
+    } catch (e) {
+      return Error(Failure(message: "Erro inesperado: $e"));
+    }
+  }
 }

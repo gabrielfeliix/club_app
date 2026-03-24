@@ -4,31 +4,41 @@ import 'package:club_app/main.dart';
 import 'package:club_app/pages/attendance_page/bloc/attendance_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 class TakeAttendancePage extends StatelessWidget {
   final String id;
-  const TakeAttendancePage({required this.id, super.key});
+  final AttendanceModel? attendanceModel;
+  const TakeAttendancePage({required this.id, this.attendanceModel, super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-          AttendanceBloc(attendanceRepository: getIt<IAttendanceRepository>())
-            ..add(GetAllKidsRequired(id: id)),
-      child: TakeAttendanceView(id: id),
+      create: (context) {
+        final bloc = AttendanceBloc(attendanceRepository: getIt<IAttendanceRepository>());
+        if (attendanceModel != null) {
+          bloc.add(GetKidsForExistingAttendanceRequired(id: id, attendance: attendanceModel!));
+        } else {
+          bloc.add(GetAllKidsRequired(id: id));
+        }
+        return bloc;
+      },
+      child: TakeAttendanceView(id: id, isViewing: attendanceModel != null, sessionDate: attendanceModel?.date),
     );
   }
 }
 
 class TakeAttendanceView extends StatelessWidget {
   final String id;
-  const TakeAttendanceView({super.key, required this.id});
+  final bool isViewing;
+  final String? sessionDate;
+  const TakeAttendanceView({super.key, required this.id, this.isViewing = false, this.sessionDate});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chamada do clubinho'),
+        title: Text(isViewing ? 'Visualizar Chamada' : 'Chamada do clubinho'),
         centerTitle: true,
       ),
       body: BlocConsumer<AttendanceBloc, AttendanceBlocState>(
@@ -46,10 +56,13 @@ class TakeAttendanceView extends StatelessWidget {
         state.message!,
         type: SnackBarType.error,
       );
-    } else if (state.isSuccess) {
+    } else if (state.isSuccess && state.message != null && state.message!.isNotEmpty) {
+      if (context.mounted) {
+        context.pop(true);
+      }
       showCustomSnackBar(
         context,
-        state.message ?? 'Carregado!',
+        state.message!,
         type: SnackBarType.success,
       );
     }
@@ -71,102 +84,148 @@ class TakeAttendanceView extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final kid = state.kidsList![index];
 
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                            '${state.kidsList![index].fullName}\n${state.kidsList![index].age} anos'),
-                        Row(
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: context.colors.background,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: context.colors.onBackground.withOpacity(0.1),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Checkbox(
-                              side: const BorderSide(color: Colors.green),
-                              value: kid.isPresent,
-                              onChanged: (bool? value) {
-                                if (value == true) {
-                                  context.read<AttendanceBloc>().add(
-                                        ChangeRequired(
-                                          kidId: kid.id,
-                                          isPresent: true,
-                                          isAbsent: false,
-                                        ),
-                                      );
-                                } else {
-                                  context.read<AttendanceBloc>().add(
-                                        ChangeRequired(
-                                          kidId: kid.id,
-                                          isPresent: false,
-                                          isAbsent: false,
-                                        ),
-                                      );
-                                }
-                              },
-                              fillColor:
-                                  MaterialStateProperty.resolveWith<Color>(
-                                      (Set<MaterialState> states) {
-                                if (states.contains(MaterialState.selected)) {
-                                  return Colors.green;
-                                }
-                                return Colors.grey;
-                              }),
-                              checkColor: Colors.white,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    kid.fullName.isNotEmpty ? kid.fullName : 'Aluno sem nome',
+                                    style: context.text.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    kid.age.isNotEmpty ? '${kid.age} anos' : 'Idade não informada',
+                                    style: context.text.bodyMedium?.copyWith(
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            Checkbox(
-                              side: const BorderSide(color: Colors.red),
-                              value: kid.isAbsent,
-                              onChanged: (bool? value) {
-                                if (value == true) {
-                                  context.read<AttendanceBloc>().add(
-                                        ChangeRequired(
-                                          kidId: kid.id,
-                                          isPresent: false,
-                                          isAbsent: true,
-                                        ),
-                                      );
-                                } else {
-                                  context.read<AttendanceBloc>().add(
-                                        ChangeRequired(
-                                          kidId: kid.id,
-                                          isPresent: false,
-                                          isAbsent: false,
-                                        ),
-                                      );
-                                }
-                              },
-                              fillColor:
-                                  MaterialStateProperty.resolveWith<Color>(
-                                      (Set<MaterialState> states) {
-                                if (states.contains(MaterialState.selected)) {
-                                  return Colors.red;
-                                }
-                                return Colors.grey;
-                              }),
-                              checkColor: Colors.white,
+                            Row(
+                              children: [
+                                Column(
+                                  children: [
+                                    Checkbox(
+                                      side: BorderSide(color: context.colors.primary.withOpacity(0.5), width: 1.5),
+                                      value: kid.isPresent,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                      onChanged: (bool? value) {
+                                        if (value == true) {
+                                          context.read<AttendanceBloc>().add(
+                                                ChangeRequired(
+                                                  kidId: kid.id,
+                                                  isPresent: true,
+                                                  isAbsent: false,
+                                                ),
+                                              );
+                                        } else {
+                                          context.read<AttendanceBloc>().add(
+                                                ChangeRequired(
+                                                  kidId: kid.id,
+                                                  isPresent: false,
+                                                  isAbsent: false,
+                                                ),
+                                              );
+                                        }
+                                      },
+                                      fillColor: MaterialStateProperty.resolveWith<Color>(
+                                          (Set<MaterialState> states) {
+                                        if (states.contains(MaterialState.selected)) {
+                                          return context.colors.primary;
+                                        }
+                                        return Colors.transparent;
+                                      }),
+                                      checkColor: context.colors.onPrimary,
+                                    ),
+                                    Text('Presente', style: context.text.labelSmall?.copyWith(fontSize: 10, color: Colors.black54)),
+                                  ],
+                                ),
+                                const SizedBox(width: 8),
+                                Column(
+                                  children: [
+                                    Checkbox(
+                                      side: BorderSide(color: context.colors.error.withOpacity(0.5), width: 1.5),
+                                      value: kid.isAbsent,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                      onChanged: (bool? value) {
+                                        if (value == true) {
+                                          context.read<AttendanceBloc>().add(
+                                                ChangeRequired(
+                                                  kidId: kid.id,
+                                                  isPresent: false,
+                                                  isAbsent: true,
+                                                ),
+                                              );
+                                        } else {
+                                          context.read<AttendanceBloc>().add(
+                                                ChangeRequired(
+                                                  kidId: kid.id,
+                                                  isPresent: false,
+                                                  isAbsent: false,
+                                                ),
+                                              );
+                                        }
+                                      },
+                                      fillColor: MaterialStateProperty.resolveWith<Color>(
+                                          (Set<MaterialState> states) {
+                                        if (states.contains(MaterialState.selected)) {
+                                          return context.colors.error;
+                                        }
+                                        return Colors.transparent;
+                                      }),
+                                      checkColor: context.colors.onError,
+                                    ),
+                                    Text('Faltou', style: context.text.labelSmall?.copyWith(fontSize: 10, color: Colors.black54)),
+                                  ],
+                                )
+                              ],
                             )
                           ],
-                        )
-                      ],
+                        ),
+                      ),
                     );
                   },
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton(
-                onPressed: () => context
-                    .read<AttendanceBloc>()
-                    .add(TakeAttendanceRequired(kidsList: state.kidsList!)),
-                style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(50),
-                    backgroundColor: Colors.green),
-                child: const Text(
-                  'Salvar Chamada',
-                  style: TextStyle(
-                    color: Colors.white,
-                  ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: CustomButton(
+                  height: 50,
+                  isLoading: state.isLoading,
+                  label: 'Salvar Chamada',
+                  onPressed: () => context
+                      .read<AttendanceBloc>()
+                      .add(TakeAttendanceRequired(kidsList: state.kidsList!, date: sessionDate)),
                 ),
               ),
-            ),
           ],
         ),
       );

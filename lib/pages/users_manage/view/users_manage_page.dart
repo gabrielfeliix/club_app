@@ -55,43 +55,88 @@ class UsersManageView extends StatelessWidget {
     if (state.teachers != null) {
       return RefreshIndicator(
         onRefresh: () => _refreshUsers(context),
-        child: ListView.builder(
+        child: ListView.separated(
+          padding: const EdgeInsets.all(16.0),
           itemCount: state.teachers!.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final user = state.teachers![index];
-            final TextEditingController controller = TextEditingController(
-              text: _getRoleLabel(user.userRole),
-            );
-            return ListTile(
-              leading: const Icon(Icons.person),
-              title: Text(
-                user.name,
+            return Card(
+              color: context.theme.colorScheme.onPrimary,
+              elevation: 4,
+              shadowColor: context.colors.onSurface.withOpacity(0.12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-              enabled: true,
-              subtitle: Text(user.email),
-              trailing: DropdownMenu<UserRole>(
-                initialSelection: user.userRole,
-                dropdownMenuEntries: const [
-                  DropdownMenuEntry(
-                    value: UserRole.teacher,
-                    label: 'Teacher',
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    radius: 24,
+                    backgroundColor: context.colors.primary.withOpacity(0.1),
+                    child: Icon(
+                      Icons.person,
+                      color: context.colors.primary,
+                      size: 28,
+                    ),
                   ),
-                  DropdownMenuEntry(
-                    value: UserRole.coordinator,
-                    label: 'Coordinator',
+                  title: Text(
+                    user.name,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
                   ),
-                  DropdownMenuEntry(
-                    value: UserRole.admin,
-                    label: 'Admin',
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Text(
+                      user.email,
+                      style: context.text.bodyMedium?.copyWith(
+                        color: context.colors.onSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
                   ),
-                ],
-                onSelected: (role) {
-                  if (role != null) {
-                    controller.text = _getRoleLabel(user.userRole);
-                    _buildAlertDialog(context, role, user.id);
-                  }
-                },
-                controller: controller,
+                  trailing: Container(
+                    height: 38,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: context.colors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<UserRole>(
+                        value: user.userRole,
+                        dropdownColor: context.theme.colorScheme.onPrimary,
+                        icon: Icon(Icons.arrow_drop_down,
+                            color: context.colors.primary),
+                        style: TextStyle(
+                          color: context.colors.primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        onChanged: (role) {
+                          if (role != null && role != user.userRole) {
+                            _buildAlertDialog(context, role, user.id);
+                          }
+                        },
+                        items: const [
+                          DropdownMenuItem(
+                            value: UserRole.teacher,
+                            child: Text('Teacher'),
+                          ),
+                          DropdownMenuItem(
+                            value: UserRole.coordinator,
+                            child: Text('Coordinator'),
+                          ),
+                          DropdownMenuItem(
+                            value: UserRole.admin,
+                            child: Text('Admin'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
             );
           },
@@ -161,18 +206,6 @@ class UsersManageView extends StatelessWidget {
         );
       },
     );
-  }
-
-  /// Função auxiliar para obter o label do role
-  String _getRoleLabel(UserRole role) {
-    switch (role) {
-      case UserRole.teacher:
-        return 'Teacher';
-      case UserRole.coordinator:
-        return 'Coordinator';
-      case UserRole.admin:
-        return 'Admin';
-    }
   }
 
   /// Refreshes the list of clubs.

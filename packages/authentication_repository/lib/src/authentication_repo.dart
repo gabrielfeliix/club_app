@@ -25,4 +25,22 @@ abstract class IAuthenticationRepository {
     required String userId,
     required UserRole newRole,
   });
+
+  Future<Result<UsersModel, Failure>> getUserData({
+    required String userId,
+  });
+
+  Future<Result<String, Failure>> updateProfile({
+    required String userId,
+    required String name,
+    required String phone,
+  });
+
+  Future<Result<String, Failure>> updateEmail({
+    required String newEmail,
+  });
+
+  Future<Result<String, Failure>> updatePassword({
+    required String newPassword,
+  });
 }

@@ -2,6 +2,8 @@ import 'package:app_ui/app_ui.dart';
 import 'package:club_app/main.dart';
 import 'package:club_app/pages/manage_member_page/bloc/manage_member_bloc.dart';
 import 'package:club_app/routes/routes.dart';
+import 'package:authentication_repository/authentication_repository.dart';
+import 'package:club_app/utils/constants.dart';
 import 'package:club_repository/club_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -58,15 +60,7 @@ class ManageUsersView extends StatelessWidget {
           builder: (context, state) => myAppbar(state, isTeacher),
         ),
       ),
-      floatingActionButton: !isTeacher
-          ? FloatingActionButton(
-              onPressed: () => onTapChildRegistration(context, id),
-              shape: const CircleBorder(),
-              backgroundColor: context.colors.primary,
-              child: Icon(Icons.person_add_alt_1_rounded,
-                  color: context.colors.onPrimary),
-            )
-          : null,
+      floatingActionButton: _buildFloatingActionButton(context, id),
       body: BlocConsumer<ManageMemberBloc, ManageMemberState>(
         builder: _handlerBuilder,
         listener: _handlerListener,
@@ -140,6 +134,105 @@ class ManageUsersView extends StatelessWidget {
   /// Navigates to the child registration when the action is triggered.
   onTapChildRegistration(BuildContext context, String id) {
     context.push(AppRouter.childRegistration, extra: id);
+  }
+
+  /// Section Widget
+  Widget? _buildFloatingActionButton(BuildContext context, String id) {
+    final authUser =
+        CacheClient.read<AuthUserModel>(key: AppConstants.userCacheKey);
+    final bool isAdminOrCoordinator = authUser?.userRole == UserRole.admin ||
+        authUser?.userRole == UserRole.coordinator;
+
+    if (!isTeacher) {
+      // Button to add Children
+      return FloatingActionButton(
+        onPressed: () => onTapChildRegistration(context, id),
+        shape: const CircleBorder(),
+        backgroundColor: context.colors.primary,
+        child: Icon(Icons.person_add_alt_1_rounded,
+            color: context.colors.onPrimary),
+      );
+    } else if (isAdminOrCoordinator) {
+      // Button to add Teachers
+      return FloatingActionButton(
+        onPressed: () => _showAddTeacherDialog(context, id),
+        shape: const CircleBorder(),
+        backgroundColor: context.colors.primary,
+        child: Icon(Icons.person_add_alt_1_rounded,
+            color: context.colors.onPrimary),
+      );
+    }
+
+    return null;
+  }
+
+  void _showAddTeacherDialog(BuildContext context, String clubId) {
+    final bloc = context.read<ManageMemberBloc>();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: context.theme.colorScheme.onPrimary,
+          title: Text(
+            'Adicionar Professor',
+            style: context.text.headlineMedium?.copyWith(
+              color: context.colors.onSecondary,
+            ),
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: MediaQuery.of(context).size.height * 0.4,
+            child: FutureBuilder(
+              future: getIt<IAuthenticationRepository>().getAllUsers(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                
+                if (snapshot.hasError || !snapshot.hasData) {
+                  return const Center(child: Text('Erro ao buscar professores'));
+                }
+
+                final result = snapshot.data!;
+                return result.when(
+                  (users) {
+                    final filteredUsers = users.where((u) => u.userRole != UserRole.admin).toList();
+
+                    if (filteredUsers.isEmpty) {
+                      return const Center(child: Text('Nenhum professor disponível encontrado'));
+                    }
+                    return ListView.builder(
+                      itemCount: filteredUsers.length,
+                      itemBuilder: (context, index) {
+                        final user = filteredUsers[index];
+                        return ListTile(
+                          title: Text(user.name),
+                          subtitle: Text(user.email),
+                          trailing: const Icon(Icons.add_circle_outline),
+                          onTap: () {
+                            bloc.add(AddTeacherToClubRequired(
+                                teacherId: user.id, clubId: clubId));
+                            Navigator.pop(dialogContext);
+                          },
+                        );
+                      },
+                    );
+                  },
+                  (err) => Center(child: Text(err.message)),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Fechar'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   /// Navigates to the user information when the action is triggered.

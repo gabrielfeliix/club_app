@@ -23,14 +23,22 @@ class GetAllKidsRequired extends IAttendanceEvent {
   List<Object> get props => [id];
 }
 
-class TakeAttendanceRequired extends IAttendanceEvent {
-  // final String clubId;
-  // final String kidId;
-  // final bool present;
-  final List<KidsModel> kidsList;
-  const TakeAttendanceRequired({required this.kidsList});
+class GetKidsForExistingAttendanceRequired extends IAttendanceEvent {
+  final String id;
+  final AttendanceModel attendance;
+
+  const GetKidsForExistingAttendanceRequired({required this.id, required this.attendance});
+  
   @override
-  List<Object> get props => [kidsList];
+  List<Object> get props => [id, attendance];
+}
+
+class TakeAttendanceRequired extends IAttendanceEvent {
+  final List<KidsModel> kidsList;
+  final String? date;
+  const TakeAttendanceRequired({required this.kidsList, this.date});
+  @override
+  List<Object> get props => [kidsList, date ?? ''];
 }
 
 class ChangeRequired extends IAttendanceEvent {

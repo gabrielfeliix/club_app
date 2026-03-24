@@ -17,6 +17,7 @@ class AttendanceBloc extends Bloc<IAttendanceEvent, AttendanceBlocState> {
         ) {
     on<GetAllAttendanceRequired>(_onGetAllAttendanceRequired);
     on<GetAllKidsRequired>(_onGetGetAllKidsRequired);
+    on<GetKidsForExistingAttendanceRequired>(_onGetKidsForExistingAttendance);
     on<ChangeRequired>(_onChangeRequired);
     on<TakeAttendanceRequired>(_onTakeAttendanceRequired);
   }
@@ -42,36 +43,23 @@ class AttendanceBloc extends Bloc<IAttendanceEvent, AttendanceBlocState> {
     emit(const AttendanceBlocState.loading());
 
     try {
-      for (final kid in event.kidsList) {
-        final response = await _attendanceRepository.takeAttendance(
-          clubId: kid.clubId,
-          kidId: kid.id,
-          present:
-              kid.isAbsent || (kid.isAbsent == false && kid.isPresent == false)
-                  ? false
-                  : true,
-        );
+      final response = await _attendanceRepository.saveAttendanceSession(
+        clubId: event.kidsList.first.clubId,
+        kidsList: event.kidsList,
+        date: event.date,
+      );
 
-        // Usando when para tratar o resultado
-        final result = await response.when(
-          (success) => success, // Retorna a mensagem de sucesso
-          (failure) {
-            // Lança uma exceção para interromper o loop
-            emit(AttendanceBlocState.failure(message: failure.message));
-            throw failure;
-          },
-        );
-      }
-
-      // Se chegou aqui, todas as operações foram bem-sucedidas
-      emit(AttendanceBlocState.successTakeAtt(
-          message:
-              'Chamada realizada com sucesso para ${event.kidsList.length} alunos'));
+      response.when(
+        (success) {
+          emit(AttendanceBlocState.successTakeAtt(
+              message: 'Chamada salva com sucesso para ${event.kidsList.length} alunos'));
+        },
+        (failure) {
+          emit(AttendanceBlocState.failure(message: failure.message));
+        },
+      );
     } catch (e) {
-      // Captura qualquer erro, seja do repository ou lançado manualmente
-      final errorMessage =
-          e is Failure ? e.message : 'Erro ao realizar chamada: $e';
-
+      final errorMessage = e is Failure ? e.message : 'Erro ao realizar chamada: $e';
       emit(AttendanceBlocState.failure(message: errorMessage));
     }
   }
@@ -126,6 +114,28 @@ class AttendanceBloc extends Bloc<IAttendanceEvent, AttendanceBlocState> {
       (failure) => emit(
         AttendanceBlocState.failure(message: failure.message),
       ),
+    );
+  }
+
+  Future<void> _onGetKidsForExistingAttendance(
+      GetKidsForExistingAttendanceRequired event, Emitter<AttendanceBlocState> emit) async {
+    emit(const AttendanceBlocState.loading());
+
+    final response = await _attendanceRepository.getChildrenBasic(clubId: event.id);
+
+    response.when(
+      (success) {
+        final mappedKids = success.map((kid) {
+          final recordPos = event.attendance.attendanceList.indexWhere((r) => r.kidId == kid.id);
+          if (recordPos >= 0) {
+            final isPresent = event.attendance.attendanceList[recordPos].present;
+            return kid.copyWith(isPresent: isPresent, isAbsent: !isPresent);
+          }
+          return kid;
+        }).toList();
+        emit(AttendanceBlocState.successKids(kidsList: mappedKids));
+      },
+      (failure) => emit(AttendanceBlocState.failure(message: failure.message)),
     );
   }
 

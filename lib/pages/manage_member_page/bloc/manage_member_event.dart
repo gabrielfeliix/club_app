@@ -44,3 +44,13 @@ class GetChildrenRequired extends IManageMemberEvent {
   @override
   List<Object> get props => [id];
 }
+
+class AddTeacherToClubRequired extends IManageMemberEvent {
+  final String teacherId;
+  final String clubId;
+
+  const AddTeacherToClubRequired({required this.teacherId, required this.clubId});
+
+  @override
+  List<Object> get props => [teacherId, clubId];
+}

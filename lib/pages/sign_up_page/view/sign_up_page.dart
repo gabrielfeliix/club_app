@@ -4,6 +4,7 @@ import 'package:app_ui/app_ui.dart';
 import 'package:authentication_repository/authentication_repository.dart';
 import 'package:club_app/main.dart';
 import 'package:club_app/pages/sign_up_page/bloc/sign_up_bloc.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -246,6 +247,16 @@ class SignUpPageView extends StatelessWidget {
                           }
                         },
                       ),
+                      SizedBox(height: 13.h),
+                      Align(
+                        alignment: Alignment.center,
+                        child: _buildTextHiperLink(
+                          context: context,
+                          text: 'Já tem uma conta? ',
+                          textLink: 'Entrar',
+                          onTap: () => context.pop(),
+                        ),
+                      ),
                       const SizedBox(height: 28),
                     ],
                   ),
@@ -259,6 +270,31 @@ class SignUpPageView extends StatelessWidget {
   }
 
   /// Widget Section
+  Widget _buildTextHiperLink({
+    required BuildContext context,
+    required String text,
+    required String textLink,
+    required GestureTapCallback onTap,
+  }) {
+    return RichText(
+      text: TextSpan(
+        style: context.text.bodySmall!
+            .copyWith(color: context.colors.onSecondary.withOpacity(0.5)),
+        children: <TextSpan>[
+          TextSpan(
+            text: ' $text',
+          ),
+          TextSpan(
+            text: ' $textLink',
+            style: context.text.labelLarge!
+                .copyWith(color: context.colors.primary),
+            recognizer: TapGestureRecognizer()..onTap = onTap,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFeedbackValidator(
     BuildContext context,
     SignUpState state,
