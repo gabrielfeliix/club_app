@@ -50,142 +50,144 @@ class SignInPageView extends StatelessWidget {
     AuthenticationState state,
   ) {
     final bloc = context.read<AuthenticationBloc>();
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final isKeyboardOpen = bottomInset > 0;
+
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: context.colors.onBackground,
-        body: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 35.w,
-                    // vertical: 65.h,
-                  ),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                      maxWidth: 245.h,
-                    ),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Padding(
-                            padding: EdgeInsets.only(bottom: 5.h),
-                            child: Hero(
-                              tag: ImageConstant.logoClub,
-                              child: SizedBox(
-                                child: Image.asset(
-                                  ImageConstant.logoClub,
-                                  filterQuality: FilterQuality.high,
-                                  fit: BoxFit.contain,
-                                  height: 230.h,
-                                ),
-                              ),
+        body: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 35.w),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 245.h),
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                padding: EdgeInsets.only(bottom: bottomInset),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeOut,
+                        height: isKeyboardOpen ? 80.h : 230.h,
+                        child: Padding(
+                          padding: EdgeInsets.only(bottom: 5.h),
+                          child: Hero(
+                            tag: ImageConstant.logoClub,
+                            child: Image.asset(
+                              ImageConstant.logoClub,
+                              filterQuality: FilterQuality.high,
+                              fit: BoxFit.contain,
                             ),
                           ),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'Entrar',
-                              style: context.text.headlineMedium!.copyWith(
-                                color: context.colors.primary,
-                              ),
-                            ),
-                          ),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'Ganhe corações para Jesus desde a infância!',
-                              style: context.text.bodyMedium!
-                                  .copyWith(color: context.colors.surface),
-                            ),
-                          ),
-                          SizedBox(height: 17.h),
-                          CustomTextField.email(
-                            hint: 'Email',
-                            textInputAction: TextInputAction.next,
-                            autovalidateMode: AutovalidateMode.disabled,
-                            textEditingController: _emailController,
-                            // validator: (value) =>
-                            //     state.email.validator(value ?? '')?.text(),
-                          ),
-                          SizedBox(height: 13.h),
-                          CustomTextField.password(
-                            obscure: state.obscure,
-                            textInputAction: TextInputAction.send,
-                            autovalidateMode: AutovalidateMode.disabled,
-                            // validator: (value) =>
-                            //     state.password.validator(value ?? '')?.text(),
-                            suffixIcon: IconButton(
-                              onPressed: () =>
-                                  bloc.add(ChangeObscureRequired()),
-                              icon: Icon(
-                                state.obscure!
-                                    ? Icons.visibility_off
-                                    : Icons.remove_red_eye,
-                              ),
-                              color: context.colors.primary,
-                            ),
-                            hint: 'Senha',
-                            textEditingController: _passwordController,
-                            onSubmitted: (st) => st.isNotEmpty
-                                ? bloc.add(
-                                    SignInRequired(
-                                      email: _emailController.text,
-                                      password: _passwordController.text,
-                                    ),
-                                  )
-                                : {},
-                          ),
-                          SizedBox(height: 13.h),
-                          Align(
-                            alignment: Alignment.topLeft,
-                            child: _buildTextHiperLink(
-                              context: context,
-                              text: 'Esqueceu a senha?',
-                              textLink: 'Clique aqui',
-                              onTap: () {},
-                            ),
-                          ),
-                          SizedBox(height: 50.h),
-                          CustomButton(
-                            label: 'Entrar',
-                            isLoading: state.isProgress,
-                            height: 35.h,
-                            onPressed: () {
-                              _formKey.currentState!.validate()
-                                  ? bloc.add(
-                                      SignInRequired(
-                                        email: _emailController.text,
-                                        password: _passwordController.text,
-                                      ),
-                                    )
-                                  : null;
-                            },
-                          ),
-                          SizedBox(height: 13.h),
-                          Align(
-                            alignment: Alignment.center,
-                            child: _buildTextHiperLink(
-                              context: context,
-                              text: 'Não tem uma conta? ',
-                              textLink: 'Cadastre-se',
-                              onTap: () => onTapSignUp(context),
-                            ),
-                          ),
-                          SizedBox(height: 13.h),
-                        ],
+                        ),
                       ),
-                    ),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Entrar',
+                          style: context.text.headlineMedium!.copyWith(
+                            color: context.colors.primary,
+                          ),
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Ganhe corações para Jesus desde a infância!',
+                          style: context.text.bodyMedium!
+                              .copyWith(color: context.colors.surface),
+                        ),
+                      ),
+                      SizedBox(height: 17.h),
+                      CustomTextField.email(
+                        hint: 'Email',
+                        textInputAction: TextInputAction.next,
+                        autovalidateMode: AutovalidateMode.disabled,
+                        textEditingController: _emailController,
+                        validator: (value) =>
+                            state.email.validator(value ?? '')?.text(),
+                      ),
+                      SizedBox(height: 13.h),
+                      CustomTextField.password(
+                        obscure: state.obscure,
+                        textInputAction: TextInputAction.send,
+                        autovalidateMode: AutovalidateMode.disabled,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Digite uma senha';
+                          }
+                          return null;
+                        },
+                        suffixIcon: IconButton(
+                          onPressed: () =>
+                              bloc.add(ChangeObscureRequired()),
+                          icon: Icon(
+                            state.obscure!
+                                ? IconsaxPlusLinear.eye_slash
+                                : IconsaxPlusLinear.eye,
+                          ),
+                          color: context.colors.primary,
+                        ),
+                        hint: 'Senha',
+                        textEditingController: _passwordController,
+                        onSubmitted: (st) => st.isNotEmpty
+                            ? bloc.add(
+                                SignInRequired(
+                                  email: _emailController.text,
+                                  password: _passwordController.text,
+                                ),
+                              )
+                            : {},
+                      ),
+                      SizedBox(height: 13.h),
+                      Align(
+                        alignment: Alignment.topLeft,
+                        child: _buildTextHiperLink(
+                          context: context,
+                          text: 'Esqueceu a senha?',
+                          textLink: 'Clique aqui',
+                          onTap: () {},
+                        ),
+                      ),
+                      SizedBox(height: 50.h),
+                      CustomButton(
+                        label: 'Entrar',
+                        isLoading: state.isProgress,
+                        height: 35.h,
+                        onPressed: () {
+                          _formKey.currentState!.validate()
+                              ? bloc.add(
+                                  SignInRequired(
+                                    email: _emailController.text,
+                                    password: _passwordController.text,
+                                  ),
+                                )
+                              : null;
+                        },
+                      ),
+                      SizedBox(height: 13.h),
+                      Align(
+                        alignment: Alignment.center,
+                        child: _buildTextHiperLink(
+                          context: context,
+                          text: 'Não tem uma conta? ',
+                          textLink: 'Cadastre-se',
+                          onTap: () => onTapSignUp(context),
+                        ),
+                      ),
+                      SizedBox(height: 13.h),
+                    ],
                   ),
                 ),
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
     );

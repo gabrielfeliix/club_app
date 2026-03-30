@@ -1,5 +1,7 @@
 library app_ui;
 
+export 'package:iconsax_plus/iconsax_plus.dart';
+
 export 'src/custom_text_field.dart';
 export 'src/custom_button.dart';
 export 'src/theme/theme.dart';

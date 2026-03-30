@@ -46,7 +46,8 @@ class HomePage extends StatelessWidget {
         ),
         BlocProvider(
           create: (_) {
-            final authUser = CacheClient.read<AuthUserModel>(key: AppConstants.userCacheKey);
+            final authUser =
+                CacheClient.read<AuthUserModel>(key: AppConstants.userCacheKey);
             return AccountBloc(
               authRepository: getIt<IAuthenticationRepository>(),
               clubRepository: getIt<IClubRepository>(),
@@ -111,8 +112,8 @@ class HomeScreenView extends StatelessWidget {
           ),
           Flexible(
             child: Text(
-              'IGREJA BATISTA\nVIDA NOVA',
-              style: context.text.titleLarge,
+              'Clubinho\nBiblico',
+              style: context.text.titleLarge?.copyWith(fontSize: 13.sp),
             ),
           ),
         ],

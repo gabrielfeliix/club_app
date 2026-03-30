@@ -65,14 +65,14 @@ class GeneralReportsView extends StatelessWidget {
             child: _SummaryCard(
                 label: 'Crianças',
                 value: state.totalKids.toString(),
-                icon: Icons.people,
+                icon: IconsaxPlusLinear.people,
                 color: context.colors.primary)),
         const SizedBox(width: 8),
         Expanded(
             child: _SummaryCard(
                 label: 'Decisões',
                 value: state.totalDecisions.toString(),
-                icon: Icons.favorite,
+                icon: IconsaxPlusBold.heart,
                 color: Colors.redAccent)),
         const SizedBox(width: 8),
         Expanded(
@@ -228,7 +228,7 @@ class GeneralReportsView extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(width: 8),
-                Icon(Icons.chevron_right,
+                Icon(IconsaxPlusLinear.arrow_right_2,
                     color: context.colors.onSurface.withOpacity(0.3)),
               ],
             ),
@@ -241,11 +241,11 @@ class GeneralReportsView extends StatelessWidget {
   Widget _buildTrendIcon(Trend trend) {
     switch (trend) {
       case Trend.up:
-        return const Icon(Icons.trending_up, color: Colors.green, size: 16);
+        return const Icon(IconsaxPlusLinear.trend_up, color: Colors.green, size: 16);
       case Trend.down:
-        return const Icon(Icons.trending_down, color: Colors.red, size: 16);
+        return const Icon(IconsaxPlusLinear.trend_down, color: Colors.red, size: 16);
       case Trend.stable:
-        return const Icon(Icons.trending_flat, color: Colors.orange, size: 16);
+        return const Icon(IconsaxPlusLinear.minus, color: Colors.orange, size: 16);
     }
   }
 }
