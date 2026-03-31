@@ -12,7 +12,9 @@ import 'package:club_app/pages/account_page/bloc/account_bloc.dart';
 import 'package:club_app/routes/routes.dart';
 import 'package:club_app/pages/general_reports_page/bloc/general_reports_bloc.dart';
 import 'package:club_app/pages/general_reports_page/view/general_reports_view.dart';
+import 'package:club_app/pages/notifications/bloc/notifications_bloc.dart';
 import 'package:club_app/utils/constants.dart';
+import 'package:notification_repository/notification_repository.dart';
 import 'package:club_repository/club_repository.dart';
 import 'package:attendance_repository/attendance_repository.dart';
 import 'package:decision_repository/decision_repository.dart';
@@ -60,6 +62,11 @@ class HomePage extends StatelessWidget {
             attendanceRepository: getIt<IAttendanceRepository>(),
             decisionRepository: getIt<IDecisionRepository>(),
           )..add(LoadGeneralReportsRequired()),
+        ),
+        BlocProvider(
+          create: (_) => NotificationsBloc(
+            notificationRepository: getIt<INotificationRepository>(),
+          )..add(GetNotifications()),
         ),
       ],
       child: const HomeScreenView(),
@@ -112,7 +119,7 @@ class HomeScreenView extends StatelessWidget {
           ),
           Flexible(
             child: Text(
-              'Clubinho\nBiblico',
+              'Clubinho\nBíblico',
               style: context.text.titleLarge?.copyWith(fontSize: 13.sp),
             ),
           ),
@@ -121,10 +128,19 @@ class HomeScreenView extends StatelessWidget {
       actions: [
         Padding(
           padding: EdgeInsets.only(right: 10.w),
-          child: IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications),
-            color: context.colors.onPrimary,
+          child: BlocBuilder<NotificationsBloc, NotificationsState>(
+            builder: (context, state) {
+              return IconButton(
+                onPressed: () => _showNotificationsBottomSheet(context),
+                icon: Badge(
+                  label: Text(state.unreadCount.toString()),
+                  isLabelVisible: state.unreadCount > 0,
+                  backgroundColor: context.colors.error,
+                  child: const Icon(Icons.notifications),
+                ),
+                color: context.colors.onPrimary,
+              );
+            },
           ),
         ),
         Padding(
@@ -178,5 +194,130 @@ class HomeScreenView extends StatelessWidget {
   /// Navigates to the SignIn screen when SignOut is performed.
   void onTapSignOut(BuildContext context) {
     context.go(AppRouter.signInScreen);
+  }
+
+  void _showNotificationsBottomSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) {
+        return BlocProvider.value(
+          value: context.read<NotificationsBloc>(),
+          child: const NotificationsBottomSheet(),
+        );
+      },
+    );
+  }
+}
+
+class NotificationsBottomSheet extends StatelessWidget {
+  const NotificationsBottomSheet({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
+        height: 600.h,
+        padding: EdgeInsets.all(20.w),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Notificações',
+                  style: context.text.titleLarge,
+                ),
+                TextButton(
+                  onPressed: () {
+                    context.read<NotificationsBloc>().add(MarkAllAsRead());
+                  },
+                  child: const Text('Limpar Tudo'),
+                ),
+              ],
+            ),
+            const Divider(),
+            Expanded(
+              child: BlocBuilder<NotificationsBloc, NotificationsState>(
+                builder: (context, state) {
+                  if (state.notifications.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.notifications_none,
+                            size: 64.sp,
+                            color: context.colors.outline,
+                          ),
+                          SizedBox(height: 10.h),
+                          Text(
+                            'Nenhuma notificação por enquanto.',
+                            style: context.text.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      context.read<NotificationsBloc>().add(GetNotifications());
+                    },
+                    child: ListView.builder(
+                      itemCount: state.notifications.length,
+                      itemBuilder: (context, index) {
+                        final notification = state.notifications[index];
+                        return ListTile(
+                          leading: Badge(
+                            isLabelVisible: !notification.isRead,
+                            child: Icon(
+                              Icons.message,
+                              color: context.colors.primary,
+                            ),
+                          ),
+                          title: Text(
+                            notification.title,
+                            style: context.text.titleMedium?.copyWith(
+                              fontWeight: notification.isRead
+                                  ? FontWeight.normal
+                                  : FontWeight.bold,
+                            ),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(notification.message),
+                              SizedBox(height: 5.h),
+                              Text(
+                                '${notification.createdAt.day}/${notification.createdAt.month}/${notification.createdAt.year}',
+                                style: context.text.labelSmall?.copyWith(
+                                  color: context.colors.outline,
+                                ),
+                              ),
+                            ],
+                          ),
+                          onTap: () {
+                            context
+                                .read<NotificationsBloc>()
+                                .add(MarkAsRead(id: notification.id));
+                          },
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

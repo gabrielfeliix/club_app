@@ -3,6 +3,9 @@ import 'package:authentication_repository/authentication_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:formz/formz.dart';
+import 'package:notification_repository/notification_repository.dart';
+import 'package:club_app/main.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 part 'authentication_event.dart';
 part 'authentication_state.dart';
@@ -21,6 +24,9 @@ class AuthenticationBloc
 
   Future<void> _onSignOutRequired(
       SignOutRequired event, Emitter<AuthenticationState> emit) async {
+    try {
+      getIt<OneSignalService>().logout();
+    } catch (_) {}
     _authRepository.logOut();
     emit(const AuthenticationState.logOUt());
   }
@@ -46,10 +52,18 @@ class AuthenticationBloc
     );
 
     response.when(
-      (success) => emit(
-        AuthenticationState.success(message: success)
-            .copyWith(obscure: isObscure),
-      ),
+      (success) {
+        final userId = Supabase.instance.client.auth.currentUser?.id;
+        if (userId != null) {
+          try {
+            getIt<OneSignalService>().login(userId);
+          } catch (_) {}
+        }
+        emit(
+          AuthenticationState.success(message: success)
+              .copyWith(obscure: isObscure),
+        );
+      },
       (failure) => emit(
         AuthenticationState.failure(message: failure.message)
             .copyWith(obscure: isObscure),

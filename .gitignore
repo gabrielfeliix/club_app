@@ -17,6 +17,7 @@ firebase.json
 .agent/
 .planning/
 .planning_init.json
+supabase_notifications_setup.sql
 # Ignore Android NDK build outputs
 android/app/.cxx/
 
