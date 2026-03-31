@@ -86,11 +86,10 @@ graph TD
 Este projeto demonstra minha capacidade de entregar produtos de ponta a ponta, desde a arquitetura de banco de dados até a experiência final do usuário.
 
 **Interessado em escalar seu projeto ou contratar um serviço premium?**
--   💻 **GitHub**: [Seu Link Aqui]
--   📧 **Email**: [Seu Contato Aqui]
--   💼 **LinkedIn**: [Seu Perfil Aqui]
+-   📧 **Email**: gfelix.developer@gmail.com
+-   💼 **LinkedIn**: [[Clique Aqui]](http://www.linkedin.com/in/gfelix-developer)
 
 ---
 <p align="center">
-  Criado com ❤️ por [Seu Nome]
+  Criado com ❤️ por Felix
 </p>
