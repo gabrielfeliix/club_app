@@ -1,6 +1,7 @@
 import 'package:app_ui/app_ui.dart';
 import 'package:club_app/main.dart';
 import 'package:club_app/routes/routes.dart';
+import 'package:club_app/utils/decision_pdf_generator.dart';
 import 'package:decision_repository/decision_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -241,6 +242,19 @@ class _DecisionsViewState extends State<DecisionsView> {
                                     ),
                                   ),
                                   actions: [
+                                    IconButton(
+                                      onPressed: () {
+                                        DecisionPdfGenerator.generateAndPrint(
+                                          childName: decision.childName,
+                                          decisionDate: decision.decisionDate,
+                                        );
+                                      },
+                                      icon: Icon(
+                                        Icons.download_rounded,
+                                        color: context.colors.primary,
+                                      ),
+                                      tooltip: 'Baixar Cartão de Decisão',
+                                    ),
                                     TextButton(
                                       onPressed: () => Navigator.pop(context),
                                       child: Text('Fechar', style: TextStyle(color: context.colors.primary)),

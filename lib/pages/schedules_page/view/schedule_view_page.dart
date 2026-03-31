@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:schedule_repository/schedule_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:club_app/main.dart';
+import 'package:club_repository/club_repository.dart';
 
 class ScheduleViewPage extends StatelessWidget {
   final ScheduleModel schedule;
@@ -22,10 +24,26 @@ class ScheduleViewPage extends StatelessWidget {
           actions: [
             IconButton(
               icon: const Icon(Icons.download),
-              onPressed: () => PdfGenerator.generateAndPrint(
-                schedule: schedule,
-                clubName: 'Clubinho',
-              ),
+              onPressed: () async {
+                String finalClubName = 'Clubinho';
+                try {
+                  final clubRepo = getIt<IClubRepository>();
+                  final result = await clubRepo.getClubInfo(id: schedule.clubId);
+                  result.when(
+                    (club) {
+                      if (club.name.isNotEmpty) {
+                        finalClubName = club.name;
+                      }
+                    },
+                    (failure) => null,
+                  );
+                } catch (_) {}
+
+                PdfGenerator.generateAndPrint(
+                  schedule: schedule,
+                  clubName: finalClubName,
+                );
+              },
             ),
           ],
         ),

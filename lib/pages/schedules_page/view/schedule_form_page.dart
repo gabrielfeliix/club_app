@@ -107,7 +107,21 @@ class _ScheduleFormViewState extends State<ScheduleFormView> {
               if (widget.isEditing && _initialized)
                 IconButton(
                   icon: const Icon(Icons.download),
-                  onPressed: () {
+                  onPressed: () async {
+                    String finalClubName = 'Clubinho';
+                    try {
+                      final clubRepo = getIt<IClubRepository>();
+                      final result = await clubRepo.getClubInfo(id: widget.clubId);
+                      result.when(
+                        (club) {
+                          if (club.name.isNotEmpty) {
+                            finalClubName = club.name;
+                          }
+                        },
+                        (failure) => null,
+                      );
+                    } catch (_) {}
+
                     final schedule = ScheduleModel(
                       id: widget.schedule?.id ?? '',
                       clubId: widget.clubId,
@@ -116,7 +130,7 @@ class _ScheduleFormViewState extends State<ScheduleFormView> {
                     );
                     PdfGenerator.generateAndPrint(
                       schedule: schedule,
-                      clubName: 'Clubinho',
+                      clubName: finalClubName,
                     );
                   },
                 ),
@@ -603,6 +617,8 @@ class _ScheduleFormViewState extends State<ScheduleFormView> {
   }
 
   Widget _buildCreationCard(BuildContext context, int index, ScheduleBlockModel block) {
+    final isMusic = block.title.toLowerCase().contains('música');
+
     return Card(
       key: ValueKey('block_create_${index}_${block.order}'),
       elevation: 0,
@@ -626,7 +642,10 @@ class _ScheduleFormViewState extends State<ScheduleFormView> {
             style: TextStyle(color: context.colors.onPrimary, fontSize: 12),
           ),
         ),
-        title: Text(block.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          isMusic && block.description.isNotEmpty ? block.description : block.title,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         subtitle: Text(
           '${block.durationMinutes} min • ${block.responsibleNames.isEmpty ? 'Sem responsáveis' : block.responsibleNames.join(', ')}',
         ),
@@ -636,17 +655,43 @@ class _ScheduleFormViewState extends State<ScheduleFormView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CustomTextField(
-                  hint: 'Título da Atividade',
-                  textEditingController: TextEditingController(text: block.title)
-                    ..selection = TextSelection.collapsed(offset: block.title.length),
-                  textInputAction: TextInputAction.next,
-                  onChanged: (val) {
-                    setState(() {
-                      _blocks[index] = _blocks[index].copyWith(title: val);
-                    });
-                  },
-                ),
+                if (isMusic) ...[
+                  CustomTextField(
+                    hint: 'Título da Música',
+                    textEditingController: TextEditingController(text: block.description)
+                      ..selection = TextSelection.collapsed(offset: block.description.length),
+                    textInputAction: TextInputAction.next,
+                    onChanged: (val) {
+                      setState(() {
+                        _blocks[index] = _blocks[index].copyWith(description: val);
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  CustomTextField(
+                    hint: 'Link da Música (YouTube/Drive)',
+                    textEditingController: TextEditingController(text: block.link ?? '')
+                      ..selection = TextSelection.collapsed(offset: (block.link ?? '').length),
+                    textInputAction: TextInputAction.next,
+                    onChanged: (val) {
+                      setState(() {
+                        _blocks[index] = _blocks[index].copyWith(link: val.trim());
+                      });
+                    },
+                  ),
+                ] else ...[
+                  CustomTextField(
+                    hint: 'Título da Atividade',
+                    textEditingController: TextEditingController(text: block.title)
+                      ..selection = TextSelection.collapsed(offset: block.title.length),
+                    textInputAction: TextInputAction.next,
+                    onChanged: (val) {
+                      setState(() {
+                        _blocks[index] = _blocks[index].copyWith(title: val);
+                      });
+                    },
+                  ),
+                ],
                 const SizedBox(height: 16),
                 Row(
                   children: [

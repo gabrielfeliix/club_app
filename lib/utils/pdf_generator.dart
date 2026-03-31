@@ -57,8 +57,8 @@ class PdfGenerator {
                 border: pw.TableBorder.all(color: PdfColors.black, width: 1),
                 columnWidths: {
                   0: const pw.FixedColumnWidth(30), // No
-                  1: const pw.FlexColumnWidth(3),  // TEMA
-                  2: const pw.FlexColumnWidth(4),  // RESPONSÁVEL
+                  1: const pw.FlexColumnWidth(3), // TEMA
+                  2: const pw.FlexColumnWidth(4), // RESPONSÁVEL
                   3: const pw.FixedColumnWidth(60), // TEMPO
                 },
                 children: [
@@ -88,7 +88,10 @@ class PdfGenerator {
                     ),
 
                   // Row 2: Contagem (2) + Boas-vindas (3) + Regras (4) + Declaração (5)
-                  if (getB(2) != null || getB(3) != null || getB(4) != null || getB(5) != null)
+                  if (getB(2) != null ||
+                      getB(3) != null ||
+                      getB(4) != null ||
+                      getB(5) != null)
                     _buildCustomRow(
                       number: _CellDef('2', span: 4, isGray: false),
                       temas: [
@@ -98,7 +101,8 @@ class PdfGenerator {
                         _CellDef(_formatTitle(getB(5)), isGray: true),
                       ],
                       responsaveis: [
-                        _CellDef(_uniqueNames([getB(2), getB(3)]), span: 2, isGray: false),
+                        _CellDef(_uniqueNames([getB(2), getB(3)]),
+                            span: 2, isGray: false),
                         _CellDef(_resp(getB(4)), isGray: false),
                         _CellDef(_resp(getB(5)), isGray: true),
                       ],
@@ -110,7 +114,10 @@ class PdfGenerator {
                     _buildCustomRow(
                       number: _CellDef('3', span: 2, isGray: false),
                       temas: [
-                        _CellDef('${_formatTitle(getB(6))}\n${_formatTitle(getB(7))}', span: 2, isGray: false),
+                        _CellDef(
+                            '${_formatTitle(getB(6))}\n${_formatTitle(getB(7))}',
+                            span: 2,
+                            isGray: false),
                       ],
                       responsaveis: [
                         _CellDef(_resp(getB(6)), isGray: false),
@@ -147,7 +154,8 @@ class PdfGenerator {
                         _CellDef(_formatTitle(getB(12)), isGray: true),
                       ],
                       responsaveis: [
-                        _CellDef(_uniqueNames([getB(10), getB(11), getB(12)]), span: 3, isGray: true),
+                        _CellDef(_uniqueNames([getB(10), getB(11), getB(12)]),
+                            span: 3, isGray: true),
                       ],
                       tempos: [_CellDef('8 Min', span: 3, isGray: true)],
                     ),
@@ -155,14 +163,18 @@ class PdfGenerator {
                   // Row 7: História (13) + Apelo (14)
                   if (getB(13) != null || getB(14) != null)
                     _buildCustomRow(
-                      number: _CellDef('7', span: 3, isGray: false), // História (13) + Apelo (14) + Trabalho (15)
+                      number: _CellDef('7',
+                          span: 3,
+                          isGray:
+                              false), // História (13) + Apelo (14) + Trabalho (15)
                       temas: [
                         _CellDef(_formatTitle(getB(13)), isGray: false),
                         _CellDef(_formatTitle(getB(14)), isGray: false),
                         _CellDef(_formatTitle(getB(15)), isGray: true),
                       ],
                       responsaveis: [
-                        _CellDef(_uniqueNames([getB(13), getB(14)]), span: 2, isGray: false),
+                        _CellDef(_uniqueNames([getB(13), getB(14)]),
+                            span: 2, isGray: false),
                         _CellDef(_resp(getB(15)), isGray: true),
                       ],
                       tempos: [
@@ -176,8 +188,13 @@ class PdfGenerator {
                     _buildCustomRow(
                       number: _CellDef('8', span: 1, isGray: false),
                       temas: [_CellDef(_formatTitle(getB(16)), isGray: false)],
-                      responsaveis: [_CellDef(_uniqueNames([getB(16)]), isGray: false)],
-                      tempos: [_CellDef('${getB(16)!.durationMinutes} Min', span: 1, isGray: false)],
+                      responsaveis: [
+                        _CellDef(_uniqueNames([getB(16)]), isGray: false)
+                      ],
+                      tempos: [
+                        _CellDef('${getB(16)!.durationMinutes} Min',
+                            span: 1, isGray: false)
+                      ],
                     ),
 
                   // Row 9: Aconselhamento (17)
@@ -185,8 +202,13 @@ class PdfGenerator {
                     _buildCustomRow(
                       number: _CellDef('9', span: 1, isGray: true),
                       temas: [_CellDef(_formatTitle(getB(17)), isGray: true)],
-                      responsaveis: [_CellDef(_uniqueNames([getB(17)]), isGray: true)],
-                      tempos: [_CellDef('${getB(17)!.durationMinutes} Min', span: 1, isGray: true)],
+                      responsaveis: [
+                        _CellDef(_uniqueNames([getB(17)]), isGray: true)
+                      ],
+                      tempos: [
+                        _CellDef('${getB(17)!.durationMinutes} Min',
+                            span: 1, isGray: true)
+                      ],
                     ),
 
                   // Row 10: Oração Final (18)
@@ -195,7 +217,10 @@ class PdfGenerator {
                       number: _CellDef('10', span: 1, isGray: false),
                       temas: [_CellDef(_formatTitle(getB(18)), isGray: false)],
                       responsaveis: [_CellDef(_resp(getB(18)), isGray: false)],
-                      tempos: [_CellDef('${getB(18)!.durationMinutes} Min', span: 1, isGray: false)],
+                      tempos: [
+                        _CellDef('${getB(18)!.durationMinutes} Min',
+                            span: 1, isGray: false)
+                      ],
                     ),
                 ],
               ),
@@ -242,7 +267,9 @@ class PdfGenerator {
 
   static pw.Widget _buildColumn(List<_CellDef> cells) {
     return pw.Column(
-      children: cells.map((c) => _subCell(c.text, span: c.span, isGray: c.isGray)).toList(),
+      children: cells
+          .map((c) => _subCell(c.text, span: c.span, isGray: c.isGray))
+          .toList(),
     );
   }
 

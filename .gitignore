@@ -14,7 +14,9 @@ firebase_options.dart
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
 firebase.json
-
+.agent/
+.planning/
+.planning_init.json
 # Ignore Android NDK build outputs
 android/app/.cxx/
 
