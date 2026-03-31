@@ -38,16 +38,16 @@ void main() async {
     anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
   );
 
-  // OneSignal Initialization
+  // Push Notifications Initialization
   final oneSignalAppId = dotenv.env['ONESIGNAL_APP_ID'] ?? '';
   if (oneSignalAppId.isNotEmpty && oneSignalAppId != 'SUBSTITUA_PELO_SEU_APP_ID') {
-    final oneSignal = OneSignalService(appId: oneSignalAppId);
-    await oneSignal.initialize();
+    final pushService = OneSignalPushService(appId: oneSignalAppId);
+    await pushService.initialize();
     
-    // If user is already logged in, map to OneSignal
+    // If user is already logged in, map to provider
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId != null) {
-      await oneSignal.login(userId);
+      await pushService.login(userId);
     }
   }
 
@@ -92,9 +92,9 @@ Future<void> setupDependences() async {
     () => SupabaseNotificationRepository(),
   );
 
-  // Register OneSignal service
+  // Register Push Notification Service
   final oneSignalAppId = dotenv.env['ONESIGNAL_APP_ID'] ?? '';
-  getIt.registerLazySingleton<OneSignalService>(
-    () => OneSignalService(appId: oneSignalAppId),
+  getIt.registerLazySingleton<IPushNotificationService>(
+    () => OneSignalPushService(appId: oneSignalAppId),
   );
 }

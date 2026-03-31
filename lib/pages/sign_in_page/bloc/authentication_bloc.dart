@@ -25,7 +25,7 @@ class AuthenticationBloc
   Future<void> _onSignOutRequired(
       SignOutRequired event, Emitter<AuthenticationState> emit) async {
     try {
-      getIt<OneSignalService>().logout();
+      getIt<IPushNotificationService>().logout();
     } catch (_) {}
     _authRepository.logOut();
     emit(const AuthenticationState.logOUt());
@@ -56,7 +56,7 @@ class AuthenticationBloc
         final userId = Supabase.instance.client.auth.currentUser?.id;
         if (userId != null) {
           try {
-            getIt<OneSignalService>().login(userId);
+            getIt<IPushNotificationService>().login(userId);
           } catch (_) {}
         }
         emit(

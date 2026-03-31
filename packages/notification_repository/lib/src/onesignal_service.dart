@@ -1,30 +1,24 @@
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'push_notification_service.dart';
 
-class OneSignalService {
+class OneSignalPushService implements IPushNotificationService {
   final String appId;
 
-  OneSignalService({required this.appId});
+  OneSignalPushService({required this.appId});
 
-  /// Initializes OneSignal with the given App ID.
+  @override
   Future<void> initialize() async {
-    // Set Log Level (Optional, but good for debugging)
     OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
-
-    // OneSignal Initialization
     OneSignal.initialize(appId);
-
-    // The promptForPushNotificationsWithUserResponse will show the native iOS or Android 13+ notification permission prompt.
-    // We can call this here or after login. Calling it here for simplicity.
     OneSignal.Notifications.requestPermission(true);
   }
 
-  /// Sets the external user ID so we can target this specific user from Supabase.
-  /// This should be called after a successful login.
+  @override
   Future<void> login(String userId) async {
     await OneSignal.login(userId);
   }
 
-  /// Clears the external user ID on logout.
+  @override
   Future<void> logout() async {
     await OneSignal.logout();
   }
