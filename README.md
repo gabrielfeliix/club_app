@@ -1,7 +1,6 @@
 # ⛪ Clubinho Bíblico App
 > Uma plataforma robusta e escalável para gestão de atividades infantis e escalas ministeriais.
 
-![Banner do Projeto](file:///C:/Users/FelixFamily/.gemini/antigravity/brain/a7f02111-80cb-40ec-b1f9-74ebfa17d33f/club_app_banner_mockup_1774980122827.png)
 
 ---
 
