@@ -89,6 +89,3 @@ Este projeto demonstra minha capacidade de entregar produtos de ponta a ponta, d
 -   💼 **LinkedIn**: [[Clique Aqui]](http://www.linkedin.com/in/gfelix-developer)
 
 ---
-<p align="center">
-  Criado com ❤️ por Felix
-</p>
