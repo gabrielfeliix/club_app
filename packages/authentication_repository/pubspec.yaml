@@ -13,6 +13,8 @@ dependencies:
   equatable: ^2.0.5
   multiple_result: ^5.1.0
   cloud_firestore: ^5.4.4
+  notification_repository:
+    path: ../notification_repository
 
   flutter:
     sdk: flutter

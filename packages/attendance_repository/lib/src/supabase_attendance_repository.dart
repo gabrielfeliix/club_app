@@ -105,19 +105,27 @@ class SupabaseAttendanceRepository implements IAttendanceRepository {
   }
 
   @override
-  Future<Result<List<AttendanceModel>, Failure>> getAllAttendancesGlobal() async {
+  Future<Result<List<AttendanceModel>, Failure>> getAllAttendancesGlobal(
+      {List<String>? clubIds}) async {
     try {
-      final response = await _supabase
-          .from('attendances')
-          .select('*, attendance_records(*)')
-          .order('date', ascending: false);
+      if (clubIds != null && clubIds.isEmpty) return const Success([]);
+
+      var query = _supabase.from('attendances').select('*, attendance_records(*)');
+
+      if (clubIds != null) {
+        query = query.filter('club_id', 'in', clubIds);
+      }
+
+      final response = await query.order('date', ascending: false);
 
       final list = response.map((e) {
         final recordsData = e['attendance_records'] as List<dynamic>? ?? [];
-        final items = recordsData.map((r) => AttendanceItem(
-              kidId: r['kid_id'] as String,
-              present: r['present'] as bool,
-            )).toList();
+        final items = recordsData
+            .map((r) => AttendanceItem(
+                  kidId: r['kid_id'] as String,
+                  present: r['present'] as bool,
+                ))
+            .toList();
 
         return AttendanceModel(
           attendanceList: items,
@@ -133,10 +141,22 @@ class SupabaseAttendanceRepository implements IAttendanceRepository {
   }
 
   @override
-  Future<Result<List<KidsModel>, Failure>> getAllChildrenGlobal() async {
+  Future<Result<List<KidsModel>, Failure>> getAllChildrenGlobal(
+      {List<String>? clubIds}) async {
     try {
-      final response = await _supabase.from('kids').select();
-      final kids = response.map((e) => KidsModel.fromJsonBasic(e).copyWith(clubId: e['club_id'] as String)).toList();
+      if (clubIds != null && clubIds.isEmpty) return const Success([]);
+
+      var query = _supabase.from('kids').select();
+
+      if (clubIds != null) {
+        query = query.filter('club_id', 'in', clubIds);
+      }
+
+      final response = await query;
+      final kids = response
+          .map((e) => KidsModel.fromJsonBasic(e)
+              .copyWith(clubId: e['club_id'] as String))
+          .toList();
       return Success(kids);
     } catch (e) {
       return Error(Failure(message: 'Erro ao buscar todas as crianças: $e'));

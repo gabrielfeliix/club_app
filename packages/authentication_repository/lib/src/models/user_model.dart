@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:authentication_repository/authentication_repository.dart';
 import 'package:equatable/equatable.dart';
 
@@ -41,12 +42,19 @@ class UsersModel extends Equatable {
   }
 
   factory UsersModel.fromJson(Map<String, dynamic> json) {
+    log('DEBUG: UsersModel.fromJson keys: ${json.keys}');
     return UsersModel(
       id: "",
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       contact: json['contact'] ?? '',
       classIds: (json['classIds'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          (json['class_ids'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          (json['classids'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           [],

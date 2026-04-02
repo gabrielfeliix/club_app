@@ -43,4 +43,9 @@ abstract class IAuthenticationRepository {
   Future<Result<String, Failure>> updatePassword({
     required String newPassword,
   });
+
+  Future<Result<String, Failure>> updateClassIds({
+    required String userId,
+    required List<String> classIds,
+  });
 }

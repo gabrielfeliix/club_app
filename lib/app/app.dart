@@ -2,6 +2,8 @@ import 'package:app_ui/app_ui.dart';
 import 'package:authentication_repository/authentication_repository.dart';
 import 'package:club_app/main.dart';
 import 'package:club_app/pages/sign_in_page/bloc/authentication_bloc.dart';
+import 'package:club_app/blocs/biometric/biometric_bloc.dart';
+import 'package:biometric_repository/biometric_repository.dart';
 import 'package:club_app/routes/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -26,8 +28,17 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<AuthenticationBloc>(
-      create: (context) => authBloc,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthenticationBloc>(
+          create: (context) => authBloc,
+        ),
+        BlocProvider<BiometricBloc>(
+          create: (context) => BiometricBloc(
+            biometricRepository: getIt<IBiometricRepository>(),
+          )..add(BiometricCheckStatusStarted()),
+        ),
+      ],
       child: ScreenUtilInit(
           designSize: const Size(360, 640),
           minTextAdapt: true,

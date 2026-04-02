@@ -21,6 +21,9 @@ class GeneralReportsView extends StatelessWidget {
               child: Text(state.message ?? 'Erro ao carregar dados.'));
         }
         if (state.status == GeneralReportsStatus.success) {
+          if (state.clubsSummaries.isEmpty) {
+            return _buildEmptyState(context);
+          }
           return RefreshIndicator(
             onRefresh: () async {
               context
@@ -55,6 +58,59 @@ class GeneralReportsView extends StatelessWidget {
         }
         return const SizedBox.shrink();
       },
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: context.colors.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                IconsaxPlusLinear.graph,
+                size: 64,
+                color: context.colors.primary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Nenhum Clubinho Vinculado',
+              style: context.text.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: context.colors.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'No momento você não possui nenhum clubinho vinculado à sua conta. '
+              'As estatísticas aparecerão assim que você for adicionado a um clubinho.',
+              style: context.text.bodyMedium?.copyWith(
+                color: context.colors.onSurface.withOpacity(0.6),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            OutlinedButton.icon(
+              onPressed: () {
+                context
+                    .read<GeneralReportsBloc>()
+                    .add(LoadGeneralReportsRequired());
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('Atualizar'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

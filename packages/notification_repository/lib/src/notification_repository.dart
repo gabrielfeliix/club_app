@@ -12,4 +12,7 @@ abstract class INotificationRepository {
 
   /// Marks all notifications for the current user as read.
   Future<void> markAllAsRead();
+
+  /// Returns a stream of notifications for the current user (real-time).
+  Stream<List<NotificationModel>> watchNotifications();
 }

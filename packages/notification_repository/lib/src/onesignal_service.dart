@@ -8,9 +8,26 @@ class OneSignalPushService implements IPushNotificationService {
 
   @override
   Future<void> initialize() async {
-    OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
-    OneSignal.initialize(appId);
-    OneSignal.Notifications.requestPermission(true);
+    try {
+      OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
+      
+      // Initialize FIRST
+      OneSignal.initialize(appId);
+      
+      // Pause IAM IMMEDIATELY after init
+      OneSignal.InAppMessages.paused(true);
+
+      // Request permission WITHOUT await to prevent ANR during startup
+      requestPermission();
+    } catch (e) {
+      // ignore: avoid_print
+      print('Error initializing OneSignal: $e');
+    }
+  }
+
+  @override
+  Future<void> requestPermission() async {
+    await OneSignal.Notifications.requestPermission(true);
   }
 
   @override
@@ -21,5 +38,10 @@ class OneSignalPushService implements IPushNotificationService {
   @override
   Future<void> logout() async {
     await OneSignal.logout();
+  }
+
+  @override
+  void setInAppMessagesPaused(bool paused) {
+    OneSignal.InAppMessages.paused(paused);
   }
 }

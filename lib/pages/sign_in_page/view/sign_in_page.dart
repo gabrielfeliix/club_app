@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:club_app/blocs/biometric/biometric_bloc.dart';
+import 'package:biometric_repository/biometric_repository.dart';
 
 //? TO DO
 //? só permitir o login com o email verificado
@@ -27,20 +29,60 @@ class SignInPage extends StatelessWidget {
   }
 }
 
-class SignInPageView extends StatelessWidget {
-  SignInPageView({super.key});
+class SignInPageView extends StatefulWidget {
+  const SignInPageView({super.key});
 
+  @override
+  State<SignInPageView> createState() => _SignInPageViewState();
+}
+
+class _SignInPageViewState extends State<SignInPageView> {
   final TextEditingController _emailController = TextEditingController();
-
   final TextEditingController _passwordController = TextEditingController();
-
   final _formKey = GlobalKey<FormState>();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final biometricState = context.read<BiometricBloc>().state;
+      if (biometricState.isEnabled && biometricState.isSupported) {
+        context.read<BiometricBloc>().add(BiometricAuthenticationRequested());
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AuthenticationBloc, AuthenticationState>(
-      listener: _handlerListener,
-      builder: _handlerBuilder,
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<AuthenticationBloc, AuthenticationState>(
+          listener: _handlerListener,
+        ),
+        BlocListener<BiometricBloc, BiometricState>(
+          listener: (context, state) {
+            if (state.status == BiometricStatus.success &&
+                state.credentials != null) {
+              context.read<AuthenticationBloc>().add(
+                    SignInRequired(
+                      email: state.credentials!.email,
+                      password: state.credentials!.password,
+                    ),
+                  );
+            } else if (state.status == BiometricStatus.failure &&
+                state.message != null) {
+              showCustomSnackBar(
+                context,
+                state.message!,
+                type: SnackBarType.error,
+              );
+            }
+          },
+        ),
+      ],
+      child: BlocBuilder<AuthenticationBloc, AuthenticationState>(
+        builder: _handlerBuilder,
+      ),
     );
   }
 
@@ -156,19 +198,24 @@ class SignInPageView extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: 50.h),
-                      CustomButton(
-                        label: 'Entrar',
-                        isLoading: state.isProgress,
-                        height: 35.h,
-                        onPressed: () {
-                          _formKey.currentState!.validate()
-                              ? bloc.add(
-                                  SignInRequired(
-                                    email: _emailController.text,
-                                    password: _passwordController.text,
-                                  ),
-                                )
-                              : null;
+                      BlocBuilder<BiometricBloc, BiometricState>(
+                        builder: (context, biometricState) {
+                          return CustomButton(
+                            label: 'Entrar',
+                            isLoading: state.isProgress ||
+                                biometricState.status == BiometricStatus.loading,
+                            height: 35.h,
+                            onPressed: () {
+                              _formKey.currentState!.validate()
+                                  ? bloc.add(
+                                      SignInRequired(
+                                        email: _emailController.text,
+                                        password: _passwordController.text,
+                                      ),
+                                    )
+                                  : null;
+                            },
+                          );
                         },
                       ),
                       SizedBox(height: 13.h),
@@ -203,6 +250,15 @@ class SignInPageView extends StatelessWidget {
       );
     }
     if (state.isSuccess) {
+      // If login is successful and biometric is enabled, update stored credentials
+      final biometricBloc = context.read<BiometricBloc>();
+      if (biometricBloc.state.isEnabled) {
+        biometricBloc.add(BiometricCredentialsStored(
+          email: _emailController.text,
+          password: _passwordController.text,
+        ));
+      }
+
       showCustomSnackBar(
         context,
         state.message!,

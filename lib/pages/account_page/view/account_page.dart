@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:club_app/pages/account_page/bloc/account_bloc.dart';
+import 'package:club_app/blocs/biometric/biometric_bloc.dart';
 
 class AccountView extends StatelessWidget {
   const AccountView({super.key});
@@ -182,9 +183,9 @@ class AccountView extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      'Nenhum clubinho vinculado.',
+                      'Nenhum clubinho vinculado',
                       style: context.text.bodyMedium?.copyWith(
-                        color: context.colors.onSurfaceVariant,
+                        color: context.colors.onSecondary.withOpacity(0.5),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -192,6 +193,67 @@ class AccountView extends StatelessWidget {
                 ],
 
                 const SizedBox(height: 32),
+
+                // Configurações Header
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Configurações',
+                    style: context.text.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: context.colors.onSurface,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Biometric Toggle
+                BlocBuilder<BiometricBloc, BiometricState>(
+                  builder: (context, state) {
+                    if (!state.isSupported) return const SizedBox.shrink();
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: context.theme.colorScheme.onPrimary,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: context.colors.primary.withOpacity(0.05),
+                        ),
+                      ),
+                      child: SwitchListTile(
+                        value: state.isEnabled,
+                        onChanged: (value) {
+                          context
+                              .read<BiometricBloc>()
+                              .add(BiometricToggleToggled(value));
+                        },
+                        title: Text(
+                          'Entrar com Biometria',
+                          style: context.text.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: context.colors.onSurface,
+                          ),
+                        ),
+                        secondary: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: context.colors.primary.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.fingerprint,
+                              color: context.colors.primary, size: 24),
+                        ),
+                        activeColor: context.colors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 12),
 
                 // Future actions (like Edit Profile, change password, etc)
                 _buildActionCard(
@@ -209,7 +271,9 @@ class AccountView extends StatelessWidget {
                     if (shouldRefresh == true) {
                       final userId = state.user?.id;
                       if (userId != null) {
-                        context.read<AccountBloc>().add(GetAccountDataRequired(userId: userId));
+                        context
+                            .read<AccountBloc>()
+                            .add(GetAccountDataRequired(userId: userId));
                       }
                     }
                   },

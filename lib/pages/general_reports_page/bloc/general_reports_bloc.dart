@@ -1,3 +1,6 @@
+import 'dart:developer';
+import 'package:authentication_repository/authentication_repository.dart';
+import 'package:club_app/utils/constants.dart';
 import 'package:attendance_repository/attendance_repository.dart' as att;
 import 'package:club_repository/club_repository.dart';
 import 'package:decision_repository/decision_repository.dart';
@@ -12,14 +15,17 @@ class GeneralReportsBloc extends Bloc<GeneralReportsEvent, GeneralReportsState> 
   final IClubRepository _clubRepository;
   final att.IAttendanceRepository _attendanceRepository;
   final IDecisionRepository _decisionRepository;
+  final IAuthenticationRepository _authRepository;
 
   GeneralReportsBloc({
     required IClubRepository clubRepository,
     required att.IAttendanceRepository attendanceRepository,
     required IDecisionRepository decisionRepository,
+    required IAuthenticationRepository authRepository,
   })  : _clubRepository = clubRepository,
         _attendanceRepository = attendanceRepository,
         _decisionRepository = decisionRepository,
+        _authRepository = authRepository,
         super(const GeneralReportsState.initial()) {
     on<LoadGeneralReportsRequired>(_onLoadGeneralReportsRequired);
   }
@@ -31,15 +37,105 @@ class GeneralReportsBloc extends Bloc<GeneralReportsEvent, GeneralReportsState> 
     emit(const GeneralReportsState.loading());
 
     try {
-      final clubsResult = await _clubRepository.getAllClubs(uuid: '');
-      final kidsResult = await _attendanceRepository.getAllChildrenGlobal();
-      final attendancesResult = await _attendanceRepository.getAllAttendancesGlobal();
-      final decisionsResult = await _decisionRepository.getAllDecisionsGlobal();
+      final cachedUser =
+          CacheClient.read<AuthUserModel>(key: AppConstants.userCacheKey);
+      
+      if (cachedUser == null) {
+        emit(const GeneralReportsState.failure('Usuário não autenticado.'));
+        return;
+      }
+
+      // BUSCA DADOS FRESCOS DO BANCO (Sincronização de permissões)
+      final userResult = await _authRepository.getUserData(userId: cachedUser.userId);
+      
+      final freshUser = userResult.when((s) => s, (e) => null);
+      
+      final bool isAdmin;
+      final List<String> allowedClubIds;
+
+      if (freshUser != null) {
+        isAdmin = freshUser.userRole == UserRole.admin;
+        allowedClubIds = freshUser.classIds;
+
+        log('DEBUG: Fresh fetch success. Role: ${freshUser.userRole}, ClubIds: $allowedClubIds');
+
+        // Atualiza o cache para outras partes do app
+        CacheClient.write<AuthUserModel>(
+          key: AppConstants.userCacheKey,
+          value: cachedUser.copyWith(
+            userRole: freshUser.userRole,
+            classIds: freshUser.classIds,
+          ),
+        );
+      } else {
+        log('DEBUG: Fresh fetch failed or returned null. Using Cache.');
+        // Fallback para o cache se a requisição de perfil falhar
+        isAdmin = cachedUser.userRole == UserRole.admin;
+        allowedClubIds = cachedUser.classIds;
+      }
+
+      final clubIdsFilter = isAdmin ? null : allowedClubIds;
+      log('DEBUG: Final clubIdsFilter applied to repos: $clubIdsFilter');
+
+      final clubsResult = await _clubRepository.getAllClubs(
+        uuid: cachedUser.userId,
+        clubIds: clubIdsFilter,
+      );
+      log('DEBUG: clubsResult: $clubsResult');
+
+      // --- SELF-HEALING SYNC LOGIC ---
+      List<String> finalClubIds = clubIdsFilter ?? [];
+      
+      if (!isAdmin) {
+        final fetchedClubs = clubsResult.when((s) => s, (e) => <ClubModel>[]);
+        if (fetchedClubs.isNotEmpty) {
+          final fetchedIds = fetchedClubs.map((c) => c.id).toList();
+          final missingIds = fetchedIds.where((id) => !allowedClubIds.contains(id)).toList();
+          
+          if (missingIds.isNotEmpty) {
+            log('DEBUG: GeneralReports self-healing triggered. Missing IDs: $missingIds');
+            final updatedIds = {...allowedClubIds, ...fetchedIds}.toList();
+            
+            // O próprio usuário atualiza seu perfil (Bypass RLS)
+            await _authRepository.updateClassIds(
+              userId: cachedUser.userId,
+              classIds: updatedIds,
+            );
+            
+            // Atualiza o cache local
+            CacheClient.write<AuthUserModel>(
+              key: AppConstants.userCacheKey,
+              value: cachedUser.copyWith(classIds: updatedIds),
+            );
+            
+            finalClubIds = updatedIds;
+          }
+        }
+      }
+      // ------------------------------
+
+      final kidsResult = await _attendanceRepository.getAllChildrenGlobal(
+        clubIds: isAdmin ? null : finalClubIds,
+      );
+      log('DEBUG: kidsResult: $kidsResult');
+
+      final attendancesResult =
+          await _attendanceRepository.getAllAttendancesGlobal(
+        clubIds: isAdmin ? null : finalClubIds,
+      );
+      log('DEBUG: attendancesResult: $attendancesResult');
+
+      final decisionsResult = await _decisionRepository.getAllDecisionsGlobal(
+        clubIds: isAdmin ? null : finalClubIds,
+      );
+      log('DEBUG: decisionsResult: $decisionsResult');
 
       final clubs = clubsResult.when((s) => s, (e) => <ClubModel>[]);
       final allKids = kidsResult.when((s) => s, (e) => <att.KidsModel>[]);
-      final allAttendances = attendancesResult.when((s) => s, (e) => <att.AttendanceModel>[]);
-      final allDecisions = decisionsResult.when((s) => s, (e) => <DecisionModel>[]);
+      final allAttendances =
+          attendancesResult.when((s) => s, (e) => <att.AttendanceModel>[]);
+      final allDecisions =
+          decisionsResult.when((s) => s, (e) => <DecisionModel>[]);
 
       if (clubs.isEmpty) {
         emit(const GeneralReportsState.success(

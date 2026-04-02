@@ -13,6 +13,7 @@ import 'package:club_app/routes/routes.dart';
 import 'package:club_app/pages/general_reports_page/bloc/general_reports_bloc.dart';
 import 'package:club_app/pages/general_reports_page/view/general_reports_view.dart';
 import 'package:club_app/pages/notifications/bloc/notifications_bloc.dart';
+import 'package:club_app/blocs/biometric/biometric_bloc.dart';
 import 'package:club_app/utils/constants.dart';
 import 'package:notification_repository/notification_repository.dart';
 import 'package:club_repository/club_repository.dart';
@@ -39,6 +40,7 @@ class HomePage extends StatelessWidget {
         BlocProvider(
           create: (_) => ClubsBloc(
             clubRepository: getIt<IClubRepository>(),
+            authRepository: getIt<IAuthenticationRepository>(),
           )..add(GetClubsRequired()),
         ),
         BlocProvider(
@@ -61,6 +63,7 @@ class HomePage extends StatelessWidget {
             clubRepository: getIt<IClubRepository>(),
             attendanceRepository: getIt<IAttendanceRepository>(),
             decisionRepository: getIt<IDecisionRepository>(),
+            authRepository: getIt<IAuthenticationRepository>(),
           )..add(LoadGeneralReportsRequired()),
         ),
         BlocProvider(
@@ -77,8 +80,135 @@ class HomePage extends StatelessWidget {
 //? TO DO
 //! se eu der dps alguem como admin ele não recebe acesso a todos os outros clubinhos
 //! ( outras trocas de role tbm ver os clubs q ficam na conta)
-class HomeScreenView extends StatelessWidget {
+class HomeScreenView extends StatefulWidget {
   const HomeScreenView({super.key});
+
+  @override
+  State<HomeScreenView> createState() => _HomeScreenViewState();
+}
+
+class _HomeScreenViewState extends State<HomeScreenView> {
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometricActivation();
+  }
+
+  void _checkBiometricActivation() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final biometricBloc = context.read<BiometricBloc>();
+      final state = biometricBloc.state;
+
+      // Se suportado, não habilitado e temos credenciais temporárias do login acabado de fazer
+      if (state.isSupported && !state.isEnabled && state.tempEmail != null) {
+        _showBiometricActivationBottomSheet(context);
+      }
+    });
+  }
+
+  void _showBiometricActivationBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (bottomSheetContext) {
+        return Container(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: context.colors.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.fingerprint,
+                    color: context.colors.primary, size: 48),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Entrada Rápida',
+                style: context.text.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: context.colors.onSurface,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Deseja habilitar o acesso por biometria para suas próximas entradas?',
+                textAlign: TextAlign.center,
+                style: context.text.bodyLarge?.copyWith(
+                  color: context.colors.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        context
+                            .read<BiometricBloc>()
+                            .add(BiometricTemporaryCredentialsCleared());
+                        Navigator.pop(bottomSheetContext);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: BorderSide(color: context.colors.primary),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Agora não'),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final biometricBloc = context.read<BiometricBloc>();
+                        final state = biometricBloc.state;
+                        
+                        if (state.tempEmail != null && state.tempPassword != null) {
+                          biometricBloc.add(BiometricToggleToggled(true));
+                          biometricBloc.add(BiometricCredentialsStored(
+                            email: state.tempEmail!,
+                            password: state.tempPassword!,
+                          ));
+                        }
+                        
+                        biometricBloc.add(BiometricTemporaryCredentialsCleared());
+                        Navigator.pop(bottomSheetContext);
+                        
+                        showCustomSnackBar(
+                          context,
+                          'Biometria habilitada com sucesso!',
+                          type: SnackBarType.success,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: context.colors.primary,
+                        foregroundColor: context.colors.onPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Habilitar'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

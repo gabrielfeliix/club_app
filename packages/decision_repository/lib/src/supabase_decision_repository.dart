@@ -49,12 +49,18 @@ class SupabaseDecisionRepository implements IDecisionRepository {
   }
 
   @override
-  Future<Result<List<DecisionModel>, Exception>> getAllDecisionsGlobal() async {
+  Future<Result<List<DecisionModel>, Exception>> getAllDecisionsGlobal(
+      {List<String>? clubIds}) async {
     try {
-      final response = await supabaseClient
-          .from('decisions')
-          .select()
-          .order('decision_date', ascending: false);
+      if (clubIds != null && clubIds.isEmpty) return const Success([]);
+
+      var query = supabaseClient.from('decisions').select();
+
+      if (clubIds != null) {
+        query = query.filter('club_id', 'in', clubIds);
+      }
+
+      final response = await query.order('decision_date', ascending: false);
 
       final List<DecisionModel> decisions = response
           .map<DecisionModel>((json) => DecisionModel.fromJson(json))
@@ -62,7 +68,8 @@ class SupabaseDecisionRepository implements IDecisionRepository {
 
       return Success(decisions);
     } catch (e, stackTrace) {
-      log('Error fetching all decisions from Supabase: $e', stackTrace: stackTrace);
+      log('Error fetching all decisions from Supabase: $e',
+          stackTrace: stackTrace);
       return Error(Exception('Failed to fetch all decisions: $e'));
     }
   }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'notification_model.dart';
 import 'notification_repository.dart';
@@ -62,5 +63,51 @@ class SupabaseNotificationRepository implements INotificationRepository {
     } catch (e) {
       throw Exception('Falha ao marcar todas as notificações como lidas: $e');
     }
+  }
+
+  @override
+  Stream<List<NotificationModel>> watchNotifications() {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return Stream.value([]);
+
+    final controller = StreamController<List<NotificationModel>>();
+
+    // Initial fetch
+    getNotifications().then((notifications) {
+      if (!controller.isClosed) controller.add(notifications);
+    }).catchError((e) {
+      if (!controller.isClosed) controller.addError(e);
+    });
+
+    // Setup channel for real-time updates
+    final channel = _supabase.channel('public:user_notifications:$userId');
+
+    channel
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'user_notifications',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'user_id',
+            value: userId,
+          ),
+          callback: (payload) async {
+            try {
+              final notifications = await getNotifications();
+              if (!controller.isClosed) controller.add(notifications);
+            } catch (e) {
+              if (!controller.isClosed) controller.addError(e);
+            }
+          },
+        )
+        .subscribe();
+
+    controller.onCancel = () {
+      _supabase.removeChannel(channel);
+      controller.close();
+    };
+
+    return controller.stream;
   }
 }

@@ -46,6 +46,8 @@ dependencies:
     path: packages/schedule_repository
   notification_repository:
     path: packages/notification_repository
+  biometric_repository:
+    path: packages/biometric_repository
 
 
 
@@ -71,6 +73,9 @@ dependencies:
   printing: ^5.14.3
   url_launcher: ^6.3.1
   onesignal_flutter: ^5.4.6
+  local_auth: ^2.3.0
+  flutter_secure_storage: ^9.2.2
+  shared_preferences: ^2.3.2
   
 
 

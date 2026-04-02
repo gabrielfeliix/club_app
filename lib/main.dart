@@ -4,6 +4,7 @@ import 'package:club_repository/club_repository.dart';
 import 'package:decision_repository/decision_repository.dart';
 import 'package:schedule_repository/schedule_repository.dart';
 import 'package:notification_repository/notification_repository.dart';
+import 'package:biometric_repository/biometric_repository.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
@@ -27,62 +28,75 @@ import 'package:club_app/firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
-  
+
   Bloc.observer = SimpleBlocObserver();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    if (e is! FirebaseException || e.code != 'duplicate-app') {
+      rethrow;
+    }
+  }
+
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL'] ?? '',
     anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
   );
 
-  // Push Notifications Initialization
+  // Initialize Push Notification Service
   final oneSignalAppId = dotenv.env['ONESIGNAL_APP_ID'] ?? '';
-  if (oneSignalAppId.isNotEmpty && oneSignalAppId != 'SUBSTITUA_PELO_SEU_APP_ID') {
-    final pushService = OneSignalPushService(appId: oneSignalAppId);
+  final pushService = OneSignalPushService(appId: oneSignalAppId);
+
+  if (oneSignalAppId.isNotEmpty &&
+      oneSignalAppId != 'SUBSTITUA_PELO_SEU_APP_ID') {
     await pushService.initialize();
-    
+
     // If user is already logged in, map to provider
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId != null) {
-      await pushService.login(userId);
+      try {
+        await pushService.login(userId);
+        await pushService.requestPermission();
+        pushService.setInAppMessagesPaused(false);
+      } catch (e) {
+        debugPrint('Error mapping push service during startup: $e');
+      }
     }
   }
 
-  await setupDependences();
+  await setupDependences(pushService);
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
   runApp(
     DevicePreview(
       enabled: !kReleaseMode,
       builder: (context) => MyApp(),
     ),
   );
-  //runApp(MyApp());
 }
 
 final getIt = GetIt.instance;
 
 /// Create singletons (logic and services) that can be shared across the app.
-Future<void> setupDependences() async {
+Future<void> setupDependences(IPushNotificationService pushService) async {
+  // Register Push Notification Service instance
+  getIt.registerLazySingleton<IPushNotificationService>(() => pushService);
+
   // Register service authentication
   getIt.registerLazySingleton<IAuthenticationRepository>(
-    () => SupabaseAuthRepository(),
+    () => SupabaseAuthRepository(
+      pushService: getIt<IPushNotificationService>(),
+    ),
   );
-  // Register service clubs
-  getIt.registerLazySingleton<IClubRepository>(
-    () => SupabaseClubRepository(),
-  );
-  // Register service attendances
+
+  // Register other services
+  getIt.registerLazySingleton<IClubRepository>(() => SupabaseClubRepository());
   getIt.registerLazySingleton<IAttendanceRepository>(
-    () => SupabaseAttendanceRepository(),
-  );
-  // Register service decisions
+      () => SupabaseAttendanceRepository());
   getIt.registerLazySingleton<IDecisionRepository>(
-    () => SupabaseDecisionRepository(),
-  );
-  // Register service schedules
+      () => SupabaseDecisionRepository());
   getIt.registerLazySingleton<IScheduleRepository>(
     () => SupabaseScheduleRepository(supabase: Supabase.instance.client),
   );
@@ -92,9 +106,8 @@ Future<void> setupDependences() async {
     () => SupabaseNotificationRepository(),
   );
 
-  // Register Push Notification Service
-  final oneSignalAppId = dotenv.env['ONESIGNAL_APP_ID'] ?? '';
-  getIt.registerLazySingleton<IPushNotificationService>(
-    () => OneSignalPushService(appId: oneSignalAppId),
+  // Register biometric repository
+  getIt.registerLazySingleton<IBiometricRepository>(
+    () => LocalBiometricRepository(),
   );
 }

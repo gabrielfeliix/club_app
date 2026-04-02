@@ -6,7 +6,7 @@ abstract class IClubRepository {
   Future<Result<String, Failure>> createClub(
       {required String name, required String address});
 
-  Future<Result<List<ClubModel>, Failure>> getAllClubs({required String uuid});
+  Future<Result<List<ClubModel>, Failure>> getAllClubs({required String uuid, List<String>? clubIds});
 
   Future<Result<String, Failure>> editName({
     required String uuid,

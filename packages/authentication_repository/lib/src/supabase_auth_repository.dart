@@ -3,13 +3,18 @@ import 'dart:developer';
 import 'package:authentication_repository/authentication_repository.dart';
 import 'package:authentication_repository/src/utils/utils.dart';
 import 'package:multiple_result/multiple_result.dart';
+import 'package:notification_repository/notification_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseAuthRepository implements IAuthenticationRepository {
   final SupabaseClient _supabaseClient;
+  final IPushNotificationService _pushService;
 
-  SupabaseAuthRepository({SupabaseClient? supabaseClient})
-      : _supabaseClient = supabaseClient ?? Supabase.instance.client;
+  SupabaseAuthRepository({
+    SupabaseClient? supabaseClient,
+    required IPushNotificationService pushService,
+  })  : _supabaseClient = supabaseClient ?? Supabase.instance.client,
+        _pushService = pushService;
 
   /// User cache key.
   final userCacheKey = '__user_cache_key__';
@@ -45,6 +50,17 @@ class SupabaseAuthRepository implements IAuthenticationRepository {
         return Error(Failure(message: 'Erro desconhecido ao criar usuário'));
       }
 
+      // If session is present (auto-login enabled), map push service
+      if (response.session != null) {
+        try {
+          await _pushService.login(user.id);
+          await _pushService.requestPermission();
+          _pushService.setInAppMessagesPaused(false);
+        } catch (e) {
+          log('Error mapping push service during signUp: $e');
+        }
+      }
+
       return const Success('Conta criada! Ative sua conta pelo Email');
     } on AuthException catch (e) {
       if (e.message.contains('already registered') || e.message.contains('already exists')) {
@@ -74,22 +90,34 @@ class SupabaseAuthRepository implements IAuthenticationRepository {
       
       final String userId = user.id;
 
-      // Fetch user data from teachers table to get the role
+      // Fetch user data from teachers table to get the role and linked clubs
       final Map<String, dynamic> doc = await _supabaseClient
           .from('teachers')
-          .select('role')
+          .select('role, classIds')
           .eq('id', userId)
           .single();
 
       final String roleUser = doc['role'] as String;
+      final List<String> classIds = List<String>.from(doc['classIds'] ?? []);
 
       CacheClient.write<AuthUserModel>(
         key: userCacheKey,
         value: AuthUserModel(
           userId: userId,
           userRole: Utils.userRoleToEnum(roleUser),
+          classIds: classIds,
         ),
       );
+
+      // Link user with OneSignal for targeted notifications
+      try {
+        await _pushService.login(userId);
+        await _pushService.requestPermission();
+        // Resume In-App Messages
+        _pushService.setInAppMessagesPaused(false);
+      } catch (e) {
+        log('Error mapping push service during signIn: $e');
+      }
 
       return const Success('Login realizado com sucesso');
     } on AuthException catch (e) {
@@ -104,6 +132,12 @@ class SupabaseAuthRepository implements IAuthenticationRepository {
 
   @override
   Future<void> logOut() async {
+    try {
+      _pushService.setInAppMessagesPaused(true);
+      await _pushService.logout();
+    } catch (e) {
+      log('Error during push service logout: $e');
+    }
     await _supabaseClient.auth.signOut();
     CacheClient.clear();
   }
@@ -158,8 +192,12 @@ class SupabaseAuthRepository implements IAuthenticationRepository {
           .select()
           .eq('id', userId)
           .single();
+      
+      log('DEBUG: Raw teacher doc for $userId: $doc');
+      
       return Success(UsersModel.fromJson(doc).copyWith(id: userId));
     } catch (e) {
+      log('DEBUG: getUserData failed for $userId: $e');
       return Error(Failure(message: 'Erro ao buscar dados do usuário: $e'));
     }
   }
@@ -206,6 +244,22 @@ class SupabaseAuthRepository implements IAuthenticationRepository {
       return Error(Failure(message: "Erro de autenticação: ${e.message}"));
     } catch (e) {
       return Error(Failure(message: "Erro inesperado ao alterar senha: $e"));
+    }
+  }
+
+  @override
+  Future<Result<String, Failure>> updateClassIds({
+    required String userId,
+    required List<String> classIds,
+  }) async {
+    try {
+      await _supabaseClient
+          .from('teachers')
+          .update({'classIds': classIds})
+          .eq('id', userId);
+      return const Success("IDs de clubes atualizados com sucesso");
+    } catch (e) {
+      return Error(Failure(message: "Erro ao sincronizar clubinhos: $e"));
     }
   }
 }

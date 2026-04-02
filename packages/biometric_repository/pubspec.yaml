@@ -1,0 +1,19 @@
+name: biometric_repository
+description: A Dart package for handling biometric authentication and secure storage.
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  local_auth: ^2.3.0
+  flutter_secure_storage: ^9.2.2
+  shared_preferences: ^2.3.2
+  equatable: ^2.0.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

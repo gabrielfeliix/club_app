@@ -225,4 +225,19 @@ class FirebaseAuthRepository implements IAuthenticationRepository {
       return Error(Failure(message: "Erro inesperado: $e"));
     }
   }
+
+  @override
+  Future<Result<String, Failure>> updateClassIds({
+    required String userId,
+    required List<String> classIds,
+  }) async {
+    try {
+      await _firebaseFirestore.collection('teachers').doc(userId).update({
+        'classIds': classIds,
+      });
+      return const Success("IDs de clubes atualizados com sucesso");
+    } catch (e) {
+      return Error(Failure(message: "Erro ao sincronizar clubinhos: $e"));
+    }
+  }
 }

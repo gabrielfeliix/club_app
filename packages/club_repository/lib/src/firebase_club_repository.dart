@@ -59,7 +59,7 @@ class FirebaseClubRepository implements IClubRepository {
 
   @override
   Future<Result<List<ClubModel>, FailureClub>> getAllClubs(
-      {required String uuid}) async {
+      {required String uuid, List<String>? clubIds}) async {
     try {
       final String userCache =
           CacheClient.read<AuthUserModel>(key: userCacheKey)!.userId;

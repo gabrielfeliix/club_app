@@ -23,6 +23,6 @@ abstract class IAttendanceRepository {
     String? date,
   });
 
-  Future<Result<List<AttendanceModel>, Failure>> getAllAttendancesGlobal();
-  Future<Result<List<KidsModel>, Failure>> getAllChildrenGlobal();
+  Future<Result<List<AttendanceModel>, Failure>> getAllAttendancesGlobal({List<String>? clubIds});
+  Future<Result<List<KidsModel>, Failure>> getAllChildrenGlobal({List<String>? clubIds});
 }

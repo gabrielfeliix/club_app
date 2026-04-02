@@ -8,6 +8,6 @@ abstract class IDecisionRepository {
   /// Adds a new decision to the database.
   Future<Result<DecisionModel, Exception>> createDecision({required DecisionModel decision});
 
-  /// Fetches all decisions from all clubs (Admin only).
-  Future<Result<List<DecisionModel>, Exception>> getAllDecisionsGlobal();
+  /// Fetches all decisions from all clubs (Admin only) or from specified clubs.
+  Future<Result<List<DecisionModel>, Exception>> getAllDecisionsGlobal({List<String>? clubIds});
 }
